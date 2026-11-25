@@ -43,19 +43,34 @@ export interface UserProfile {
   sound_enabled?: number;
 }
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/world-map", label: "World Map", icon: MapIcon },
-  { href: "/syllabus", label: "Syllabus", icon: BookOpen },
-  { href: "/practice", label: "Practice & PYQs", icon: Swords },
-  { href: "/puzzles", label: "Puzzle Dungeon", icon: Puzzle },
-  { href: "/code-arena", label: "Code Arena", icon: Code2 },
-  { href: "/exam-arena", label: "Exam Arena", icon: Award },
-  { href: "/vault", label: "Memory Vault", icon: Layers },
-  { href: "/planner", label: "Study Planner", icon: CalendarDays },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/notes", label: "My Notes", icon: NotebookPen },
-  { href: "/settings", label: "Settings", icon: Settings },
+const NAV_GROUPS = [
+  {
+    label: "Study & Explore",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: Home },
+      { href: "/world-map", label: "World Map", icon: MapIcon },
+      { href: "/syllabus", label: "Syllabus (90)", icon: BookOpen },
+    ],
+  },
+  {
+    label: "Practice & Arena",
+    items: [
+      { href: "/practice", label: "Practice (10k+)", icon: Swords },
+      { href: "/puzzles", label: "Puzzle & Bosses", icon: Puzzle },
+      { href: "/code-arena", label: "Code Arena", icon: Code2 },
+      { href: "/exam-arena", label: "Mock Tests", icon: Award },
+    ],
+  },
+  {
+    label: "Retention & Journal",
+    items: [
+      { href: "/vault", label: "Memory Vault", icon: Layers },
+      { href: "/planner", label: "Study Planner", icon: CalendarDays },
+      { href: "/analytics", label: "Analytics", icon: BarChart3 },
+      { href: "/notes", label: "Notes & Marks", icon: NotebookPen },
+      { href: "/settings", label: "Profile & Stamps", icon: Settings },
+    ],
+  },
 ];
 
 export function JournalShell({
@@ -294,38 +309,44 @@ export function JournalShell({
             </div>
           )}
 
-          <nav className="space-y-1">
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-ink text-ivory shadow-sm"
-                      : "text-ink hover:bg-parchment/80"
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${active ? "text-mustard" : "text-ink-muted"}`} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+          <nav className="space-y-4">
+            {NAV_GROUPS.map((group) => (
+              <div key={group.label} className="space-y-1">
+                <p className="px-2.5 text-[10px] font-bold uppercase tracking-wider text-ink-muted">
+                  {group.label}
+                </p>
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const active =
+                    pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] font-medium transition-colors ${
+                        active ? "bg-ink text-ivory shadow-sm" : "text-ink hover:bg-parchment/80"
+                      }`}
+                    >
+                      <Icon className={`w-4 h-4 shrink-0 ${active ? "text-mustard" : "text-ink-muted"}`} />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
 
             {user?.role === "admin" && (
               <Link
                 href="/admin"
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium mt-3 border border-terracotta/40 ${
+                className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] font-medium mt-2 border border-terracotta/40 ${
                   pathname.startsWith("/admin")
                     ? "bg-terracotta text-ivory"
                     : "bg-terracotta/15 text-ink hover:bg-terracotta/25"
                 }`}
               >
-                <Shield className="w-4 h-4" />
+                <Shield className="w-4 h-4 shrink-0" />
                 <span>Admin CMS</span>
               </Link>
             )}
