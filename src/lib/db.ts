@@ -37,6 +37,7 @@ export function getDb(): DatabaseSync {
   if (!_initialized) {
     initSchema(_db);
     seedIfEmpty(_db);
+    syncOfficialSyllabus(_db);
     _initialized = true;
   }
   return _db;
@@ -309,6 +310,35 @@ function initSchema(db: DatabaseSync) {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+}
+
+function syncOfficialSyllabus(db: DatabaseSync) {
+  const upsertChapter = db.prepare(`
+    INSERT INTO chapters (id, kingdom_id, order_index, slug, title, summary, boss_title, estimated_minutes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      order_index = excluded.order_index,
+      slug = excluded.slug,
+      title = excluded.title,
+      summary = excluded.summary,
+      boss_title = excluded.boss_title,
+      estimated_minutes = excluded.estimated_minutes
+  `);
+  const upsertTopic = db.prepare(`
+    INSERT INTO topics (id, chapter_id, order_index, title, subtopics_json)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      chapter_id = excluded.chapter_id,
+      order_index = excluded.order_index,
+      title = excluded.title,
+      subtopics_json = excluded.subtopics_json
+  `);
+  for (const ch of CHAPTERS) {
+    upsertChapter.run(ch.id, ch.kingdom_id, ch.order_index, ch.slug, ch.title, ch.summary, ch.boss_title, ch.estimated_minutes);
+    ch.topics.forEach((t, idx) => {
+      upsertTopic.run(t.id, ch.id, idx + 1, t.title, JSON.stringify(t.subtopics));
+    });
+  }
 }
 
 function seedIfEmpty(db: DatabaseSync) {
