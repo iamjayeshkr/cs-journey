@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle2, Play, RotateCcw } from "lucide-react";
 
 /* 1. LINKED LIST INTERACTIVE VISUAL DIAGRAM */
@@ -31,13 +32,19 @@ function LinkedListVisual() {
         <ArrowRight className="w-4 h-4 shrink-0 text-ink" />
         {cur.nodes.map((n, i) => (
           <React.Fragment key={n.addr}>
-            <div className={`rounded border-2 px-3 py-1.5 text-center shrink-0 transition-all ${cur.hl === i ? "bg-[#F7E396] border-terracotta scale-105" : "bg-ivory border-ink"}`}>
+            <motion.div
+              layout
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 120, damping: 14 }}
+              className={`rounded border-2 px-3 py-1.5 text-center shrink-0 ${cur.hl === i ? "bg-[#F7E396] border-terracotta scale-105 shadow-md" : "bg-ivory border-ink"}`}
+            >
               <span className="block text-[9px] font-mono text-ink-muted">{n.addr}</span>
               <span className="font-mono font-bold text-sm">{n.v}</span>
               <span className="block text-[10px] font-mono text-terracotta">
                 {i < cur.nodes.length - 1 ? `→ ${cur.nodes[i + 1].addr}` : "→ NULL"}
               </span>
-            </div>
+            </motion.div>
             {i < cur.nodes.length - 1 && <ArrowRight className="w-4 h-4 shrink-0 text-ink" />}
           </React.Fragment>
         ))}
@@ -270,10 +277,16 @@ export function ConceptVisualizerCards({
               </div>
               <div className="space-y-1.5">
                 {lines.slice(0, shown).map((line, lIdx) => (
-                  <div key={lIdx} className="flex items-start gap-2 p-2 rounded bg-[#FAF4E8] border border-ink/15 text-xs font-mono">
+                  <motion.div
+                    key={lIdx}
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-start gap-2 p-2.5 rounded bg-[#FAF4E8] border border-ink/15 text-xs font-mono"
+                  >
                     <CheckCircle2 className="w-3.5 h-3.5 text-forest shrink-0 mt-0.5" />
                     <span>{line}</span>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>

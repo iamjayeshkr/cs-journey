@@ -21,6 +21,7 @@ import { Illustration, KingdomIllustration } from "@/components/IllustratedAsset
 import { JourneyTraveler } from "@/components/JourneyTraveler";
 import { TeachingMethodsData, TeachingMethodsPanel } from "@/components/TeachingMethodsPanel";
 import { ConceptVisualizerCards } from "@/components/ConceptVisualizerCards";
+import { CodeBlock } from "@/components/CodeBlock";
 
 const STAGES = [
   { id: "discover", label: "1. Discover", icon: Compass },
@@ -106,6 +107,13 @@ function ConceptPageInner() {
   const [noteText, setNoteText] = useState("");
   const [learningLevel, setLearningLevel] = useState<1 | 2 | 3 | 4>(1);
   const [showPauseThink, setShowPauseThink] = useState(false);
+  const [practiceIdx, setPracticeIdx] = useState(0);
+  const [interviewAnswer, setInterviewAnswer] = useState("");
+  const [interviewFeedback, setInterviewFeedback] = useState<{ understood: boolean; feedback: string; follow_up?: string } | null>(null);
+  const [interviewHint, setInterviewHint] = useState(0);
+  const [showInterviewSolution, setShowInterviewSolution] = useState(false);
+  const [masteryIdx, setMasteryIdx] = useState(0);
+  const [masteryStreak, setMasteryStreak] = useState(0);
   const [toast, setToast] = useState("");
 
   async function loadAll() {
@@ -318,9 +326,18 @@ function ConceptPageInner() {
             {data.lesson && (
               <>
                 {activeStage === "discover" && (
-                  <div className="journal-card p-6 washi-tape space-y-4">
-                    <h2 className="font-hand text-3xl font-bold">Stage 1: Discover the Story</h2>
-                    <div className="p-4 rounded-md bg-[#F2E6CF]/75 border border-ink/20 flex flex-col sm:flex-row items-center gap-4">
+                  <div className="journal-card p-6 washi-tape space-y-5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[11px] font-bold uppercase text-terracotta">Story Blog • Why This Exists</span>
+                        <h2 className="font-hand text-3xl font-bold mt-0.5">Stage 1: Discover the Story</h2>
+                      </div>
+                      <span className="text-xs px-2.5 py-1 rounded bg-parchment border border-ink/20 font-semibold">
+                        2 min read
+                      </span>
+                    </div>
+
+                    <div className="p-4 rounded-md bg-[#F2E6CF]/75 border border-ink/20 flex flex-col sm:flex-row items-center gap-5">
                       <div className="rounded border border-ink/25 overflow-hidden shrink-0">
                         <Illustration
                           src={
@@ -329,13 +346,26 @@ function ConceptPageInner() {
                               : "/assets/characters/explorer-reading.png"
                           }
                           alt={data.concept.title}
-                          width={data.concept.simulator_type === "linked_list" ? 240 : 120}
-                          height={135}
+                          width={data.concept.simulator_type === "linked_list" ? 260 : 120}
+                          height={145}
                           className="object-cover"
                         />
                       </div>
-                      <p className="font-serif text-base leading-relaxed">{data.lesson.discover_story}</p>
+                      <div className="space-y-2.5">
+                        {data.lesson.discover_story.split("\n\n").map((para, pIdx) => (
+                          <p key={pIdx} className="font-serif text-base leading-relaxed text-ink">
+                            {para}
+                          </p>
+                        ))}
+                      </div>
                     </div>
+
+                    {data.lesson.why_it_matters && (
+                      <div className="sticky-note p-3.5 rounded text-xs">
+                        <strong>Takeaway before we begin:</strong> {data.lesson.why_it_matters}
+                      </div>
+                    )}
+
                     <div className="flex justify-end gap-2">
                       <button type="button" onClick={() => completeStage("discover")} className="forest-btn px-4 py-2 rounded text-xs font-semibold">
                         Stamp Discover ✓
@@ -451,9 +481,7 @@ function ConceptPageInner() {
                     })()}
 
                     {data.lesson.pseudocode && (
-                      <div className="p-4 rounded bg-[#2B2118] text-[#F5EBD8] font-mono text-xs whitespace-pre-wrap">
-                        {data.lesson.pseudocode}
-                      </div>
+                      <CodeBlock code={data.lesson.pseudocode} title={`${data.concept.title} — Pseudocode`} />
                     )}
 
                     {data.lesson.learning_objectives && data.lesson.learning_objectives.length > 0 && (
@@ -509,19 +537,116 @@ function ConceptPageInner() {
                   </div>
                 )}
 
-                {(activeStage === "practice" || activeStage === "exam") && (
+                {activeStage === "practice" && (
                   <div className="journal-card p-6 space-y-4">
-                    <h2 className="font-hand text-3xl font-bold">
-                      {activeStage === "exam" ? "Stage 7: UGC NET PYQs & Exam Check" : "Stage 5: Guided Practice"}
-                    </h2>
-                    {data.questions
-                      .filter((q) => (activeStage === "exam" ? q.is_pyq === 1 : true))
-                      .map((q) => {
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[11px] font-bold uppercase text-terracotta">One-by-One Twist Practice</span>
+                        <h2 className="font-hand text-3xl font-bold">
+                          Stage 5: Guided Practice ({data.questions.length} Questions)
+                        </h2>
+                      </div>
+                      <span className="px-3 py-1 rounded bg-parchment border border-ink/25 text-xs font-bold">
+                        Question {Math.min(practiceIdx + 1, Math.max(1, data.questions.length))} of {data.questions.length}
+                      </span>
+                    </div>
+
+                    {data.questions.length > 0 && (() => {
+                      const q = data.questions[Math.min(practiceIdx, data.questions.length - 1)];
+                      const fb = questionFeedback[q.id];
+                      return (
+                        <div className="p-5 rounded-md bg-ivory border-2 border-ink/25 space-y-3">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="px-2 py-0.5 rounded bg-[#F7E9B4] border border-ink/20 font-bold text-ink">
+                              {q.pyq_label || "Concept Twist"}
+                            </span>
+                            <span className="text-ink-muted font-semibold">Choose the best reasoning</span>
+                          </div>
+                          <p className="font-serif text-base font-semibold">{q.prompt}</p>
+                          <div className="grid sm:grid-cols-2 gap-2.5">
+                            {q.options.map((o) => (
+                              <button
+                                key={o.id}
+                                type="button"
+                                onClick={() => setSelectedAnswers((prev) => ({ ...prev, [q.id]: o.id }))}
+                                className={`p-3 rounded border text-left text-xs transition-colors ${
+                                  selectedAnswers[q.id] === o.id
+                                    ? "bg-ink text-ivory border-ink"
+                                    : "bg-[#FAF4E8] border-ink/20 hover:bg-parchment"
+                                }`}
+                              >
+                                <span className="font-bold mr-1.5">{o.label}.</span>
+                                {o.option_text}
+                              </button>
+                            ))}
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                            <button
+                              type="button"
+                              onClick={() => submitQuestion(q.id)}
+                              className="terracotta-btn px-4 py-2 rounded text-xs font-semibold"
+                            >
+                              Check Answer
+                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                disabled={practiceIdx === 0}
+                                onClick={() => setPracticeIdx((i) => Math.max(0, i - 1))}
+                                className="parchment-btn px-3 py-1.5 rounded text-xs font-semibold disabled:opacity-40"
+                              >
+                                ← Previous
+                              </button>
+                              <button
+                                type="button"
+                                disabled={practiceIdx >= data.questions.length - 1}
+                                onClick={() => setPracticeIdx((i) => Math.min(data.questions.length - 1, i + 1))}
+                                className="ink-btn px-4 py-1.5 rounded text-xs font-semibold disabled:opacity-40"
+                              >
+                                Next Question →
+                              </button>
+                            </div>
+                          </div>
+
+                          {fb && (
+                            <div
+                              className={`p-3.5 rounded text-xs ${
+                                fb.is_correct ? "bg-forest/15 border border-forest" : "bg-terracotta/15 border border-terracotta"
+                              }`}
+                            >
+                              <p className="font-bold">{fb.is_correct ? "Correct! Great reasoning." : "Not quite — look at why:"}</p>
+                              <p className="mt-1">{fb.explanation}</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    <div className="flex justify-end gap-2">
+                      <button type="button" onClick={() => completeStage("practice")} className="forest-btn px-4 py-2 rounded text-xs font-semibold">
+                        Stamp Practice ✓
+                      </button>
+                      <button type="button" onClick={() => setActiveStage("challenge")} className="terracotta-btn px-4 py-2 rounded text-xs font-semibold">
+                        Next: Interview Challenge →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {activeStage === "exam" && (
+                  <div className="journal-card p-6 space-y-4">
+                    <h2 className="font-hand text-3xl font-bold">Stage 7: UGC NET Exam Prep Bank</h2>
+                    <p className="text-xs text-ink-muted">
+                      All exam-relevant questions & PYQ patterns for {data.concept.title} ({data.questions.length} available).
+                    </p>
+                    <div className="space-y-3">
+                      {data.questions.map((q, qIdx) => {
                         const fb = questionFeedback[q.id];
                         return (
                           <div key={q.id} className="p-4 rounded bg-ivory border border-ink/20 space-y-2.5">
                             <span className="text-xs font-bold text-terracotta">
-                              {q.is_pyq ? q.pyq_label || "UGC NET PYQ" : "Concept Check"}
+                              Q{qIdx + 1} • {q.is_pyq ? q.pyq_label || "UGC NET PYQ" : q.pyq_label || "UGC NET Pattern"}
                             </span>
                             <p className="text-sm font-semibold">{q.prompt}</p>
                             <div className="grid sm:grid-cols-2 gap-2">
@@ -549,11 +674,7 @@ function ConceptPageInner() {
                               Check Answer
                             </button>
                             {fb && (
-                              <div
-                                className={`p-3 rounded text-xs ${
-                                  fb.is_correct ? "bg-forest/15 border border-forest" : "bg-terracotta/15 border border-terracotta"
-                                }`}
-                              >
+                              <div className={`p-3 rounded text-xs ${fb.is_correct ? "bg-forest/15 border border-forest" : "bg-terracotta/15 border border-terracotta"}`}>
                                 <p className="font-bold">{fb.is_correct ? "Correct!" : "Incorrect"}</p>
                                 <p className="mt-1">{fb.explanation}</p>
                               </div>
@@ -561,9 +682,10 @@ function ConceptPageInner() {
                           </div>
                         );
                       })}
+                    </div>
                     <div className="flex justify-end gap-2">
-                      <button type="button" onClick={() => completeStage(activeStage)} className="forest-btn px-4 py-2 rounded text-xs font-semibold">
-                        Stamp {activeStage === "exam" ? "Exam Prep" : "Practice"} ✓
+                      <button type="button" onClick={() => completeStage("exam")} className="forest-btn px-4 py-2 rounded text-xs font-semibold">
+                        Stamp Exam Prep ✓
                       </button>
                     </div>
                   </div>
@@ -571,44 +693,94 @@ function ConceptPageInner() {
 
                 {activeStage === "challenge" && (
                   <div className="journal-card p-6 space-y-4">
-                    <h2 className="font-hand text-3xl font-bold">Stage 6: Reasoning Puzzle Challenge</h2>
-                    {data.puzzles.length === 0 ? (
-                      <p className="text-sm text-ink-muted">Explore more puzzles in the Puzzle Dungeon!</p>
-                    ) : (
-                      data.puzzles.slice(0, 1).map((p) => (
-                        <div key={p.id} className="p-4 rounded bg-ivory border border-ink/20 space-y-3">
-                          <h3 className="font-semibold">{p.title}</h3>
-                          <p className="text-sm">{p.prompt}</p>
-                          {p.config.choices && (
-                            <div className="grid sm:grid-cols-2 gap-2">
-                              {p.config.choices.map((ch) => (
-                                <button
-                                  key={ch}
-                                  type="button"
-                                  onClick={() => setPuzzleChoice(ch)}
-                                  className={`p-2.5 rounded border text-xs text-left ${
-                                    puzzleChoice === ch ? "bg-ink text-ivory" : "bg-[#FAF4E8] border-ink/20"
-                                  }`}
-                                >
-                                  {ch}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => submitPuzzle(p.id)}
-                            className="terracotta-btn px-4 py-1.5 rounded text-xs font-semibold"
-                          >
-                            Submit Puzzle (+{p.xp_reward} XP)
-                          </button>
-                          {puzzleFeedback && <p className="text-xs font-semibold text-forest">{puzzleFeedback}</p>}
-                        </div>
-                      ))
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[11px] font-bold uppercase text-terracotta">Corporate Engineering Interview Round</span>
+                        <h2 className="font-hand text-3xl font-bold">Stage 6: Corporate Interview Challenge</h2>
+                      </div>
+                      <span className="px-2.5 py-1 rounded bg-[#F7E9B4] border border-ink/25 text-xs font-bold">
+                        45-Min System & Algo Round
+                      </span>
+                    </div>
+
+                    <div className="p-4 rounded-md bg-[#F2E6CF] border border-ink/25 space-y-2.5">
+                      <p className="text-sm font-semibold">
+                        Interview Prompt: Design & defend a production-ready solution for <span className="text-terracotta">{data.concept.title}</span> under strict latency & memory constraints (10M+ operations, adversarial edge cases).
+                      </p>
+                      <ul className="list-disc pl-5 text-xs text-ink-muted space-y-1">
+                        <li><strong>Constraint 1:</strong> Handle empty, single-element, and duplicate/tie edge cases cleanly.</li>
+                        <li><strong>Constraint 2:</strong> Justify your exact time & space complexity and explain any trade-off.</li>
+                        <li><strong>Follow-up Twist:</strong> How would your approach change if memory is strictly bounded (O(1) extra space)?</li>
+                      </ul>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-xs font-semibold">Write Your Interview Approach & Complexity Justification:</label>
+                      <textarea
+                        rows={4}
+                        value={interviewAnswer}
+                        onChange={(e) => setInterviewAnswer(e.target.value)}
+                        placeholder="Explain your data structures, invariants, edge-case handling, and O(...) bounds as you would to an interviewer..."
+                        className="w-full p-3 text-xs rounded journal-ruled border border-ink/25"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const res = await fetch("/api/verify-understanding", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                concept_title: `${data.concept.title} (Corporate Interview)`,
+                                explanation: interviewAnswer,
+                              }),
+                            });
+                            if (res.ok) setInterviewFeedback(await res.json());
+                          }}
+                          className="terracotta-btn px-4 py-1.5 rounded text-xs font-semibold"
+                        >
+                          Evaluate Interview Answer (AI)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setInterviewHint((h) => Math.min(2, h + 1))}
+                          className="parchment-btn px-3 py-1.5 rounded text-xs font-semibold"
+                        >
+                          Interviewer Hint ({interviewHint}/2)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowInterviewSolution(!showInterviewSolution)}
+                          className="ink-btn px-3 py-1.5 rounded text-xs font-semibold"
+                        >
+                          {showInterviewSolution ? "Hide Model Approach" : "Show Model Approach"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {interviewHint >= 1 && (
+                      <div className="sticky-note p-3 rounded text-xs space-y-1">
+                        <p><strong>Hint 1:</strong> Always state your base/empty-input guard and loop invariant before writing logic.</p>
+                        {interviewHint >= 2 && (
+                          <p><strong>Hint 2:</strong> Mention worst-case vs average-case complexity and how in-place pointer/state updates save memory.</p>
+                        )}
+                      </div>
                     )}
+
+                    {interviewFeedback && (
+                      <div className={`p-3 rounded text-xs border ${interviewFeedback.understood ? "bg-forest/15 border-forest" : "bg-parchment border-ink/25"}`}>
+                        <p className="font-bold">{interviewFeedback.feedback}</p>
+                        {interviewFeedback.follow_up && <p className="mt-1 italic">Interviewer Follow-up: {interviewFeedback.follow_up}</p>}
+                      </div>
+                    )}
+
+                    {showInterviewSolution && data.lesson.pseudocode && (
+                      <CodeBlock code={data.lesson.pseudocode} title="Model Interview Approach" />
+                    )}
+
                     <div className="flex justify-end">
                       <button type="button" onClick={() => completeStage("challenge")} className="forest-btn px-4 py-2 rounded text-xs font-semibold">
-                        Stamp Challenge ✓
+                        Stamp Interview Challenge ✓
                       </button>
                     </div>
                   </div>
@@ -616,20 +788,86 @@ function ConceptPageInner() {
 
                 {activeStage === "mastery" && (
                   <div className="journal-card p-6 washi-tape-green space-y-4">
-                    <h2 className="font-hand text-3xl font-bold">Stage 8: Mastery & Spaced Revision Card</h2>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[11px] font-bold uppercase text-forest">Maths-Style Confidence Drill</span>
+                        <h2 className="font-hand text-3xl font-bold">Stage 8: Practice Until 100% Confident</h2>
+                      </div>
+                      <span className="px-3 py-1 rounded bg-forest/20 border border-forest text-xs font-bold">
+                        Confidence Streak: {masteryStreak} / 3
+                      </span>
+                    </div>
+
                     <div className="sticky-note p-4 rounded">
                       <p className="text-xs font-bold uppercase mb-1">Revision Summary</p>
                       <p className="font-serif text-sm">{data.lesson.revision_summary}</p>
                     </div>
-                    <p className="text-xs text-ink-muted">
-                      Stamping Mastery schedules this concept in your Memory Vault (1, 3, 7, 14, 30-day spaced repetition) and updates your Mastery Score.
-                    </p>
+
+                    {data.questions.length > 0 && (() => {
+                      const mq = data.questions[masteryIdx % data.questions.length];
+                      const mfb = questionFeedback[`m-${mq.id}`];
+                      return (
+                        <div className="p-4 rounded bg-ivory border border-ink/25 space-y-3">
+                          <p className="text-xs font-bold text-ink-muted">Confidence Drill #{masteryIdx + 1}</p>
+                          <p className="text-sm font-semibold">{mq.prompt}</p>
+                          <div className="grid sm:grid-cols-2 gap-2">
+                            {mq.options.map((o) => (
+                              <button
+                                key={o.id}
+                                type="button"
+                                onClick={() => setSelectedAnswers((p) => ({ ...p, [`m-${mq.id}`]: o.id }))}
+                                className={`p-2.5 rounded border text-left text-xs ${
+                                  selectedAnswers[`m-${mq.id}`] === o.id ? "bg-ink text-ivory" : "bg-[#FAF4E8] border-ink/20"
+                                }`}
+                              >
+                                <strong className="mr-1.5">{o.label}.</strong>{o.option_text}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const optId = selectedAnswers[`m-${mq.id}`];
+                                if (!optId) return;
+                                const res = await fetch("/api/practice", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ question_id: mq.id, selected_option_id: optId }),
+                                });
+                                const json = await res.json();
+                                if (res.ok) {
+                                  setQuestionFeedback((p) => ({ ...p, [`m-${mq.id}`]: json }));
+                                  setMasteryStreak((s) => (json.is_correct ? s + 1 : 0));
+                                }
+                              }}
+                              className="forest-btn px-4 py-1.5 rounded text-xs font-semibold"
+                            >
+                              Verify Drill
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setMasteryIdx((i) => i + 1)}
+                              className="parchment-btn px-3 py-1.5 rounded text-xs font-semibold"
+                            >
+                              Try Another Similar Problem →
+                            </button>
+                          </div>
+                          {mfb && (
+                            <p className={`text-xs font-semibold ${mfb.is_correct ? "text-forest" : "text-terracotta"}`}>
+                              {mfb.is_correct ? "✓ Nailed it! " : "✗ Review: "}{mfb.explanation}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
+
                     <button
                       type="button"
                       onClick={() => completeStage("mastery")}
                       className="terracotta-btn px-5 py-2.5 rounded-md text-sm font-semibold"
                     >
-                      Stamp Concept Mastery (+30 XP)
+                      I Feel Confident — Stamp Mastery (+30 XP)
                     </button>
                   </div>
                 )}

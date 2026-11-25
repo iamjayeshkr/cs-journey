@@ -15,6 +15,7 @@ import {
 } from "./curriculum-data";
 import { RICH_CONCEPTS_PART1 } from "./unit-concepts-seed";
 import { RICH_CONCEPTS_PART2 } from "./unit-concepts-more";
+import { buildMissingChapterConcepts, buildTwistQuestionsForConcept } from "./all-chapters-seed";
 
 let _db: DatabaseSync | null = null;
 let _initialized = false;
@@ -42,6 +43,7 @@ export function getDb(): DatabaseSync {
     seedIfEmpty(_db);
     syncOfficialSyllabus(_db);
     syncRichConcepts(_db);
+    syncAllChaptersAndQuestions(_db);
     _initialized = true;
   }
   return _db;
@@ -415,6 +417,91 @@ function syncRichConcepts(db: DatabaseSync) {
       JSON.stringify(rc.teaching_methods),
       JSON.stringify(rc.flashcards)
     );
+  }
+}
+
+function syncAllChaptersAndQuestions(db: DatabaseSync) {
+  const autoConcepts = buildMissingChapterConcepts();
+  const insertConcept = db.prepare(`
+    INSERT OR IGNORE INTO concepts (id, chapter_id, topic_id, order_index, slug, title, difficulty, simulator_type, content_status, estimated_minutes, xp_reward)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'authored', ?, ?)
+  `);
+  const insertLesson = db.prepare(`
+    INSERT OR IGNORE INTO lessons (
+      id, concept_id, discover_story, understand_intuition, formal_definition, examples_json, properties_json, edge_cases_json, applications_json, revision_summary,
+      learning_objectives_json, why_it_matters, level_1_beginner, level_2_foundation, level_3_intermediate, level_4_jrf,
+      misconceptions_json, pseudocode, complexity_json, exam_relevance, teaching_methods_json, flashcards_json
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  for (const ac of autoConcepts) {
+    insertConcept.run(
+      ac.id,
+      ac.chapter_id,
+      ac.topic_id,
+      ac.order_index,
+      ac.slug,
+      ac.title,
+      ac.difficulty,
+      ac.simulator_type,
+      ac.estimated_minutes,
+      ac.xp_reward
+    );
+    insertLesson.run(
+      `les-${ac.id}`,
+      ac.id,
+      ac.discover_story,
+      ac.level_2_foundation,
+      ac.level_3_intermediate,
+      JSON.stringify(ac.examples),
+      JSON.stringify(ac.properties),
+      JSON.stringify(ac.edge_cases),
+      JSON.stringify(ac.applications),
+      ac.why_it_matters,
+      JSON.stringify(ac.learning_objectives),
+      ac.why_it_matters,
+      ac.level_1_beginner,
+      ac.level_2_foundation,
+      ac.level_3_intermediate,
+      ac.level_4_jrf,
+      JSON.stringify(ac.misconceptions),
+      ac.pseudocode,
+      JSON.stringify(ac.complexity),
+      ac.exam_relevance,
+      JSON.stringify(ac.teaching_methods),
+      JSON.stringify(ac.flashcards)
+    );
+  }
+
+  // Ensure every concept has 10+ twist practice questions
+  const allConcepts = db
+    .prepare(
+      `SELECT c.id, c.chapter_id, c.title, c.slug, ch.kingdom_id
+       FROM concepts c JOIN chapters ch ON ch.id = c.chapter_id`
+    )
+    .all() as Array<{ id: string; chapter_id: string; title: string; slug: string; kingdom_id: string }>;
+
+  const countStmt = db.prepare("SELECT COUNT(*) as c FROM questions WHERE concept_id = ?");
+  const insertQ = db.prepare(`
+    INSERT OR IGNORE INTO questions (id, kingdom_id, chapter_id, concept_id, prompt, explanation, difficulty, is_pyq, pyq_label, xp_reward)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const insertOpt = db.prepare(`
+    INSERT OR IGNORE INTO question_options (id, question_id, label, option_text, is_correct)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+
+  for (const c of allConcepts) {
+    const existingCount = (countStmt.get(c.id) as { c: number }).c;
+    if (existingCount >= 10) continue;
+    const twists = buildTwistQuestionsForConcept(c);
+    for (const q of twists) {
+      insertQ.run(q.id, q.kingdom_id, q.chapter_id, q.concept_id, q.prompt, q.explanation, q.difficulty, q.is_pyq, q.pyq_label, q.xp_reward);
+      q.options.forEach((opt, idx) => {
+        insertOpt.run(`${q.id}-opt-${idx}`, q.id, opt.label, opt.text, opt.is_correct ? 1 : 0);
+      });
+    }
   }
 }
 

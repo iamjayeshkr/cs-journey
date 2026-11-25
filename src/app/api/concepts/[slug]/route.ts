@@ -22,8 +22,13 @@ export async function GET(_req: Request, context: { params: Promise<{ slug: stri
     .all(String(concept.id), String(kingdom.id)) as Array<Record<string, unknown>>;
 
   const questions = db
-    .prepare("SELECT * FROM questions WHERE concept_id = ? OR kingdom_id = ? LIMIT 6")
-    .all(String(concept.id), String(kingdom.id)) as Array<Record<string, unknown>>;
+    .prepare(
+      `SELECT * FROM questions
+       WHERE concept_id = ? OR kingdom_id = ?
+       ORDER BY CASE WHEN concept_id = ? THEN 0 ELSE 1 END, is_pyq DESC, id ASC
+       LIMIT 15`
+    )
+    .all(String(concept.id), String(kingdom.id), String(concept.id)) as Array<Record<string, unknown>>;
 
   const optionsStmt = db.prepare("SELECT id, label, option_text, is_correct FROM question_options WHERE question_id = ?");
   const enrichedQuestions = questions.map((q) => ({
