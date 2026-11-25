@@ -3,20 +3,15 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  ArrowRight,
-  Award,
-  CheckCircle2,
-  Circle,
-  Clock,
-  Flame,
-  Layers,
-  Puzzle,
-  Swords,
-  Trophy,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, Circle, Clock, Flame } from "lucide-react";
 import { JournalShell, UserProfile } from "@/components/JournalShell";
 import { MapKingdom, WorldMapCanvas } from "@/components/WorldMapCanvas";
+import {
+  AchievementStamp,
+  CharacterIllustration,
+  Illustration,
+  KingdomIllustration,
+} from "@/components/IllustratedAssets";
 
 interface DashboardData {
   user: UserProfile | null;
@@ -89,16 +84,26 @@ export default function DashboardPage() {
   return (
     <JournalShell user={data.user}>
       <div className="space-y-6">
-        {/* Top Welcome & Overall Preparation */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <h1 className="font-hand text-4xl font-bold text-ink leading-none">
-              Namaste, {data.user?.full_name}!
-            </h1>
-            <p className="text-sm text-ink-muted mt-1">
-              Ready for today&apos;s quest? Target: <span className="font-semibold text-ink">{data.user?.target_exam}</span>
-            </p>
+        {/* Top Welcome & Character Portrait */}
+        <div className="journal-parchment p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-lg bg-[#FAF4E8] border-2 border-ink/30 flex items-center justify-center overflow-hidden shrink-0">
+              <CharacterIllustration
+                characterKey={data.user?.avatar_key}
+                alt={data.user?.full_name || "Explorer"}
+                size={60}
+              />
+            </div>
+            <div>
+              <h1 className="font-hand text-4xl font-bold text-ink leading-none">
+                Namaste, {data.user?.full_name}!
+              </h1>
+              <p className="text-sm text-ink-muted mt-1">
+                Target: <span className="font-semibold text-ink">{data.user?.target_exam}</span> • Lv. {data.user?.level} Scholar
+              </p>
+            </div>
           </div>
+
           <div className="flex flex-wrap items-center gap-3">
             <div className="journal-card px-4 py-2 flex items-center gap-2">
               <Flame className="w-5 h-5 text-terracotta" />
@@ -107,7 +112,7 @@ export default function DashboardPage() {
                 <p className="text-sm font-bold">{data.user?.streak_days} Days</p>
               </div>
             </div>
-            <div className="journal-card px-4 py-2 min-w-[190px]">
+            <div className="journal-card px-4 py-2 min-w-[200px]">
               <div className="flex justify-between text-xs font-semibold mb-1">
                 <span>Overall Readiness</span>
                 <span>{data.overall_progress}%</span>
@@ -119,10 +124,10 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 10 Kingdoms Quick Cards */}
+        {/* 10 Kingdoms Illustrated Cards */}
         <section className="journal-card p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-hand text-2xl font-bold">My Subjects — 10 Kingdoms</h2>
+            <h2 className="font-hand text-3xl font-bold">My Subjects — 10 Kingdoms</h2>
             <span className="text-xs font-semibold text-ink-muted">
               {data.kingdoms_explored} / 10 Kingdoms Explored
             </span>
@@ -132,20 +137,17 @@ export default function DashboardPage() {
               <Link
                 key={k.id}
                 href={`/kingdoms/${k.slug}`}
-                className="p-3 rounded-md bg-ivory border border-ink/20 hover:bg-parchment/70 transition-colors"
+                className="p-3 rounded-md bg-ivory border border-ink/20 hover:bg-parchment/70 transition-colors flex flex-col items-center text-center"
               >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span
-                    className="w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center border border-ink/25"
-                    style={{ backgroundColor: `${k.theme_color}55` }}
-                  >
-                    {k.order_index}
-                  </span>
-                  <span className="text-xs font-bold text-ink">{k.progress_pct}%</span>
-                </div>
-                <p className="text-xs font-semibold leading-snug line-clamp-2 min-h-[32px]">{k.title}</p>
-                <div className="h-1.5 rounded-full bg-parchment border border-ink/15 mt-2 overflow-hidden">
-                  <div className="h-full bg-forest" style={{ width: `${k.progress_pct}%` }} />
+                <KingdomIllustration kingdomKey={k.id} alt={k.title} size={74} />
+                <p className="text-xs font-semibold leading-snug line-clamp-2 mt-1.5 min-h-[32px]">
+                  {k.order_index}. {k.title}
+                </p>
+                <div className="w-full flex items-center gap-2 mt-2">
+                  <div className="flex-1 h-1.5 rounded-full bg-parchment border border-ink/15 overflow-hidden">
+                    <div className="h-full bg-forest" style={{ width: `${k.progress_pct}%` }} />
+                  </div>
+                  <span className="text-[11px] font-bold">{k.progress_pct}%</span>
                 </div>
               </Link>
             ))}
@@ -163,13 +165,20 @@ export default function DashboardPage() {
               <h3 className="font-hand text-3xl font-bold mt-1">
                 Linked List Mastery (Kingdom VII)
               </h3>
-              <p className="font-serif text-sm text-ink-muted mt-2 leading-relaxed">
-                The Mountain Express Railway needs your pointer skills! Master node insertion,
-                deletion, in-place reversal, and conquer the Pointer Lord.
-              </p>
+              <div className="my-3 p-3 rounded bg-[#FAF4E8] border border-ink/15 flex items-center gap-3">
+                <Illustration
+                  src="/assets/educational/railway-train.png"
+                  alt="Mountain Express Railway"
+                  width={120}
+                  height={62}
+                />
+                <p className="font-serif text-xs text-ink-muted leading-relaxed">
+                  Master node insertion, deletion, in-place reversal, and conquer the Pointer Lord.
+                </p>
+              </div>
             </div>
-            <div className="mt-4 pt-3 border-t border-ink/15 flex items-center justify-between">
-              <span className="text-xs font-semibold text-ink-muted">+80 XP • Interactive Simulator</span>
+            <div className="pt-2 border-t border-ink/15 flex items-center justify-between">
+              <span className="text-xs font-semibold text-ink-muted">+80 XP • Interactive Railway Lab</span>
               <Link
                 href="/concepts/singly-linked-list"
                 className="terracotta-btn px-4 py-2 rounded-md text-xs font-semibold inline-flex items-center gap-1.5"
@@ -180,16 +189,16 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Quick Actions */}
+          {/* Quick Actions with real extracted sprites */}
           <div className="lg:col-span-4 journal-card p-5">
             <h3 className="font-hand text-2xl font-bold mb-3">Quick Adventures</h3>
             <div className="grid grid-cols-1 gap-2.5">
               <Link
                 href="/puzzles"
-                className="p-3 rounded-md bg-[#F7E9B4]/55 border border-ink/20 hover:bg-[#F7E9B4]/80 flex items-center justify-between"
+                className="p-2.5 rounded-md bg-[#F7E9B4]/55 border border-ink/20 hover:bg-[#F7E9B4]/80 flex items-center justify-between"
               >
-                <div className="flex items-center gap-2.5">
-                  <Puzzle className="w-5 h-5 text-ink" />
+                <div className="flex items-center gap-3">
+                  <Illustration src="/assets/puzzles/treasure-chest.png" alt="Puzzle Dungeon" width={40} height={40} />
                   <div>
                     <p className="text-sm font-semibold">Puzzle Dungeon</p>
                     <p className="text-[11px] text-ink-muted">Pointer, scheduling & logic challenges</p>
@@ -199,10 +208,10 @@ export default function DashboardPage() {
               </Link>
               <Link
                 href="/vault"
-                className="p-3 rounded-md bg-forest/15 border border-ink/20 hover:bg-forest/25 flex items-center justify-between"
+                className="p-2.5 rounded-md bg-forest/15 border border-ink/20 hover:bg-forest/25 flex items-center justify-between"
               >
-                <div className="flex items-center gap-2.5">
-                  <Layers className="w-5 h-5 text-forest" />
+                <div className="flex items-center gap-3">
+                  <Illustration src="/assets/companions/kronos.png" alt="Memory Vault" width={40} height={40} />
                   <div>
                     <p className="text-sm font-semibold">Memory Vault</p>
                     <p className="text-[11px] text-ink-muted">
@@ -214,10 +223,10 @@ export default function DashboardPage() {
               </Link>
               <Link
                 href="/exam-arena"
-                className="p-3 rounded-md bg-dusty-blue/20 border border-ink/20 hover:bg-dusty-blue/35 flex items-center justify-between"
+                className="p-2.5 rounded-md bg-dusty-blue/20 border border-ink/20 hover:bg-dusty-blue/35 flex items-center justify-between"
               >
-                <div className="flex items-center gap-2.5">
-                  <Swords className="w-5 h-5 text-ink" />
+                <div className="flex items-center gap-3">
+                  <Illustration src="/assets/bosses/boss-shield.png" alt="Exam Arena" width={40} height={40} />
                   <div>
                     <p className="text-sm font-semibold">Exam Arena</p>
                     <p className="text-[11px] text-ink-muted">Timed UGC NET mocks & PYQs</p>
@@ -324,26 +333,15 @@ export default function DashboardPage() {
           </div>
 
           <div className="lg:col-span-3 journal-card p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-hand text-2xl font-bold">Achievements</h3>
-              <Trophy className="w-4 h-4 text-mustard" />
-            </div>
+            <h3 className="font-hand text-2xl font-bold mb-3">Achievement Stamps</h3>
             <div className="space-y-2">
-              {data.achievements.slice(0, 4).map((a) => (
-                <div
+              {data.achievements.slice(0, 3).map((a) => (
+                <AchievementStamp
                   key={a.id}
-                  className={`p-2.5 rounded border text-xs flex items-center gap-2.5 ${
-                    a.unlocked_at
-                      ? "bg-[#F7E9B4]/50 border-ink/25"
-                      : "bg-ivory/60 border-ink/10 opacity-60"
-                  }`}
-                >
-                  <Award className={`w-4 h-4 shrink-0 ${a.unlocked_at ? "text-terracotta" : "text-ink-muted"}`} />
-                  <div>
-                    <p className="font-semibold">{a.title}</p>
-                    <p className="text-[10px] text-ink-muted">{a.unlocked_at ? "Unlocked!" : a.description}</p>
-                  </div>
-                </div>
+                  title={a.title}
+                  description={a.description}
+                  unlocked={Boolean(a.unlocked_at)}
+                />
               ))}
             </div>
           </div>

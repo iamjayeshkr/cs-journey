@@ -1,19 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import { Play, Plus, RotateCcw, Trash2, ArrowRightLeft, Search } from "lucide-react";
+import { Play, Plus, RotateCcw, Trash2, ArrowRightLeft, Search, StepForward } from "lucide-react";
 
-/* 1. LINKED LIST RAILWAY SIMULATOR */
+/* 1. LINKED LIST RAILWAY SIMULATOR (Insert, Delete, Search, Traverse, Reverse) */
 export function LinkedListSimulator() {
   const [nodes, setNodes] = useState<number[]>([10, 20, 30, 40]);
   const [inputVal, setInputVal] = useState("25");
   const [position, setPosition] = useState<"head" | "end" | "after20">("end");
   const [highlightIdx, setHighlightIdx] = useState<number | null>(null);
+  const [traverseIdx, setTraverseIdx] = useState<number | null>(null);
   const [log, setLog] = useState<string>("Ready: head → [10] → [20] → [30] → [40] → NULL");
 
   function handleInsert() {
     const val = Number(inputVal);
     if (!Number.isFinite(val)) return;
+    setTraverseIdx(null);
     if (position === "head") {
       setNodes((prev) => [val, ...prev]);
       setHighlightIdx(0);
@@ -42,6 +44,7 @@ export function LinkedListSimulator() {
   function handleDelete() {
     const val = Number(inputVal);
     const idx = nodes.indexOf(val);
+    setTraverseIdx(null);
     if (idx === -1) {
       setLog(`Value ${val} not found in list.`);
       return;
@@ -54,11 +57,30 @@ export function LinkedListSimulator() {
   function handleSearch() {
     const val = Number(inputVal);
     const idx = nodes.indexOf(val);
+    setTraverseIdx(null);
     setHighlightIdx(idx >= 0 ? idx : null);
     setLog(idx >= 0 ? `Found ${val} at station index ${idx} after ${idx + 1} hops.` : `${val} not found (reached NULL).`);
   }
 
+  function handleTraverseStep() {
+    if (nodes.length === 0) {
+      setLog("List is empty (head == NULL).");
+      return;
+    }
+    const nextIdx = traverseIdx === null ? 0 : traverseIdx + 1;
+    if (nextIdx >= nodes.length) {
+      setTraverseIdx(null);
+      setHighlightIdx(null);
+      setLog("Traversal reached NULL — end of railway line.");
+    } else {
+      setTraverseIdx(nextIdx);
+      setHighlightIdx(nextIdx);
+      setLog(`curr = station[${nextIdx}] (data: ${nodes[nextIdx]}). Following curr.next...`);
+    }
+  }
+
   function handleReverse() {
+    setTraverseIdx(null);
     setNodes((prev) => [...prev].reverse());
     setHighlightIdx(null);
     setLog("Reversed list in-place in O(n) time, O(1) space using (prev, curr, next) pointers!");
@@ -73,6 +95,7 @@ export function LinkedListSimulator() {
           onClick={() => {
             setNodes([10, 20, 30, 40]);
             setHighlightIdx(null);
+            setTraverseIdx(null);
             setLog("Reset to [10 → 20 → 30 → 40 → NULL].");
           }}
           className="parchment-btn px-3 py-1 rounded text-xs font-semibold inline-flex items-center gap-1"
@@ -91,15 +114,22 @@ export function LinkedListSimulator() {
           ) : (
             nodes.map((val, idx) => (
               <React.Fragment key={`${idx}-${val}`}>
-                <div
-                  className={`flex items-center rounded border-2 transition-all ${
-                    highlightIdx === idx
-                      ? "bg-[#F7E396] border-terracotta scale-105"
-                      : "bg-[#FAF4E8] border-ink"
-                  }`}
-                >
-                  <div className="px-3 py-2 font-mono font-bold text-sm border-r border-ink/30">{val}</div>
-                  <div className="px-2 py-2 text-[11px] font-mono text-terracotta">next</div>
+                <div className="relative">
+                  {traverseIdx === idx && (
+                    <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-mono font-bold text-terracotta">
+                      curr
+                    </span>
+                  )}
+                  <div
+                    className={`flex items-center rounded border-2 transition-all ${
+                      highlightIdx === idx
+                        ? "bg-[#F7E396] border-terracotta scale-105"
+                        : "bg-[#FAF4E8] border-ink"
+                    }`}
+                  >
+                    <div className="px-3 py-2 font-mono font-bold text-sm border-r border-ink/30">{val}</div>
+                    <div className="px-2 py-2 text-[11px] font-mono text-terracotta">next</div>
+                  </div>
                 </div>
                 <span className="text-ink font-bold">→</span>
               </React.Fragment>
@@ -119,7 +149,7 @@ export function LinkedListSimulator() {
           type="number"
           value={inputVal}
           onChange={(e) => setInputVal(e.target.value)}
-          className="w-24 px-2.5 py-1.5 text-sm font-mono rounded bg-ivory border border-ink/25"
+          className="w-20 px-2.5 py-1.5 text-sm font-mono rounded bg-ivory border border-ink/25"
         />
         <select
           value={position}
@@ -139,6 +169,9 @@ export function LinkedListSimulator() {
         <button type="button" onClick={handleSearch} className="parchment-btn px-3 py-1.5 rounded text-xs font-semibold inline-flex items-center gap-1">
           <Search className="w-3.5 h-3.5" /> Search
         </button>
+        <button type="button" onClick={handleTraverseStep} className="parchment-btn px-3 py-1.5 rounded text-xs font-semibold inline-flex items-center gap-1">
+          <StepForward className="w-3.5 h-3.5" /> Step Traverse
+        </button>
         <button type="button" onClick={handleReverse} className="ink-btn px-3 py-1.5 rounded text-xs font-semibold inline-flex items-center gap-1">
           <ArrowRightLeft className="w-3.5 h-3.5" /> Reverse
         </button>
@@ -149,7 +182,115 @@ export function LinkedListSimulator() {
   );
 }
 
-/* 2. CPU SCHEDULING SIMULATOR */
+/* 2. STACK & QUEUE LAB */
+export function StackQueueSimulator() {
+  const [items, setItems] = useState<number[]>([10, 20, 30]);
+  const [val, setVal] = useState("40");
+  const [mode, setMode] = useState<"stack" | "queue">("stack");
+
+  function pushOrEnqueue() {
+    const num = Number(val);
+    if (!Number.isFinite(num)) return;
+    setItems((prev) => [...prev, num]);
+  }
+  function popOrDequeue() {
+    setItems((prev) => (mode === "stack" ? prev.slice(0, -1) : prev.slice(1)));
+  }
+
+  return (
+    <div className="journal-card p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-hand text-2xl font-bold">Stack (LIFO) & Queue (FIFO) Lab</h3>
+        <div className="flex gap-1.5">
+          <button type="button" onClick={() => setMode("stack")} className={`px-3 py-1 rounded text-xs font-semibold ${mode === "stack" ? "ink-btn" : "parchment-btn"}`}>
+            Stack
+          </button>
+          <button type="button" onClick={() => setMode("queue")} className={`px-3 py-1 rounded text-xs font-semibold ${mode === "queue" ? "ink-btn" : "parchment-btn"}`}>
+            Queue
+          </button>
+        </div>
+      </div>
+      <div className="p-4 rounded bg-[#F2E6CF] border border-ink/20 flex items-center gap-2 min-h-[70px]">
+        {items.length === 0 ? (
+          <span className="text-xs font-mono text-ink-muted">Empty {mode}</span>
+        ) : (
+          items.map((x, i) => (
+            <div key={i} className="px-3 py-2 rounded bg-[#FAF4E8] border-2 border-ink font-mono text-sm font-bold">
+              {x}
+            </div>
+          ))
+        )}
+      </div>
+      <div className="flex gap-2">
+        <input type="number" value={val} onChange={(e) => setVal(e.target.value)} className="w-20 px-2.5 py-1.5 text-sm font-mono rounded bg-ivory border border-ink/25" />
+        <button type="button" onClick={pushOrEnqueue} className="forest-btn px-3 py-1.5 rounded text-xs font-semibold">
+          {mode === "stack" ? "Push" : "Enqueue"}
+        </button>
+        <button type="button" onClick={popOrDequeue} className="terracotta-btn px-3 py-1.5 rounded text-xs font-semibold">
+          {mode === "stack" ? "Pop" : "Dequeue"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* 3. PAGE REPLACEMENT LAB (FIFO vs LRU & Belady's Anomaly) */
+export function PageReplacementSimulator() {
+  const refString = [7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3];
+  const [framesCount, setFramesCount] = useState(3);
+  const [algo, setAlgo] = useState<"FIFO" | "LRU">("LRU");
+
+  const frames: number[] = [];
+  const lastUsed = new Map<number, number>();
+  let faults = 0;
+
+  refString.forEach((page, step) => {
+    const hit = frames.includes(page);
+    if (!hit) {
+      faults++;
+      if (frames.length < framesCount) {
+        frames.push(page);
+      } else if (algo === "FIFO") {
+        frames.shift();
+        frames.push(page);
+      } else {
+        let lruIdx = 0;
+        let minStep = Infinity;
+        frames.forEach((f, idx) => {
+          const t = lastUsed.get(f) ?? -1;
+          if (t < minStep) {
+            minStep = t;
+            lruIdx = idx;
+          }
+        });
+        frames[lruIdx] = page;
+      }
+    }
+    lastUsed.set(page, step);
+  });
+
+  return (
+    <div className="journal-card p-5 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="font-hand text-2xl font-bold">Page Replacement Lab (FIFO vs LRU)</h3>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => setAlgo("FIFO")} className={`px-3 py-1 rounded text-xs font-semibold ${algo === "FIFO" ? "ink-btn" : "parchment-btn"}`}>FIFO</button>
+          <button type="button" onClick={() => setAlgo("LRU")} className={`px-3 py-1 rounded text-xs font-semibold ${algo === "LRU" ? "ink-btn" : "parchment-btn"}`}>LRU</button>
+          <select value={framesCount} onChange={(e) => setFramesCount(Number(e.target.value))} className="px-2 py-1 rounded bg-ivory border border-ink/25 text-xs">
+            <option value={3}>3 Frames</option>
+            <option value={4}>4 Frames</option>
+          </select>
+        </div>
+      </div>
+      <p className="text-xs font-mono bg-[#F2E6CF] p-2.5 rounded">Reference String: {refString.join(", ")}</p>
+      <p className="text-sm font-bold text-terracotta">
+        Total Page Faults ({algo}, {framesCount} frames): {faults} / {refString.length}
+      </p>
+    </div>
+  );
+}
+
+/* 4. CPU SCHEDULING SIMULATOR */
 export function CpuSchedulingSimulator() {
   const [algo, setAlgo] = useState<"FCFS" | "SJF" | "RR">("FCFS");
   const [quantum, setQuantum] = useState(2);
@@ -244,7 +385,6 @@ export function CpuSchedulingSimulator() {
         </div>
       </div>
 
-      {/* Gantt Chart */}
       <div className="p-3 rounded bg-[#F2E6CF] border border-ink/20">
         <p className="text-xs font-semibold mb-2">Gantt Timeline</p>
         <div className="flex items-stretch overflow-x-auto">
@@ -294,7 +434,7 @@ export function CpuSchedulingSimulator() {
   );
 }
 
-/* 3. SQL PLAYGROUND SIMULATOR */
+/* 5. SQL PLAYGROUND SIMULATOR */
 export function SqlPlaygroundSimulator() {
   const rows = [
     { id: 1, name: "Rudra", kingdom: "DSA", score: 88 },
@@ -308,25 +448,13 @@ export function SqlPlaygroundSimulator() {
     <div className="journal-card p-5 space-y-4">
       <h3 className="font-hand text-2xl font-bold">Interactive SQL & Relational Algebra Vault</h3>
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setPreset("all")}
-          className={`px-3 py-1.5 rounded text-xs font-mono ${preset === "all" ? "ink-btn" : "parchment-btn"}`}
-        >
+        <button type="button" onClick={() => setPreset("all")} className={`px-3 py-1.5 rounded text-xs font-mono ${preset === "all" ? "ink-btn" : "parchment-btn"}`}>
           SELECT * FROM Mastery;
         </button>
-        <button
-          type="button"
-          onClick={() => setPreset("high")}
-          className={`px-3 py-1.5 rounded text-xs font-mono ${preset === "high" ? "ink-btn" : "parchment-btn"}`}
-        >
+        <button type="button" onClick={() => setPreset("high")} className={`px-3 py-1.5 rounded text-xs font-mono ${preset === "high" ? "ink-btn" : "parchment-btn"}`}>
           σ score ≥ 85 (WHERE score &gt;= 85)
         </button>
-        <button
-          type="button"
-          onClick={() => setPreset("group")}
-          className={`px-3 py-1.5 rounded text-xs font-mono ${preset === "group" ? "ink-btn" : "parchment-btn"}`}
-        >
+        <button type="button" onClick={() => setPreset("group")} className={`px-3 py-1.5 rounded text-xs font-mono ${preset === "group" ? "ink-btn" : "parchment-btn"}`}>
           GROUP BY kingdom HAVING AVG(score) &gt; 80
         </button>
       </div>
@@ -374,10 +502,9 @@ export function SqlPlaygroundSimulator() {
   );
 }
 
-/* 4. DFA AUTOMATA SIMULATOR */
+/* 6. DFA AUTOMATA SIMULATOR */
 export function DfaSimulator() {
   const [tape, setTape] = useState("10101");
-  // DFA accepting binary strings ending with "01"
   let state: "q0" | "q1" | "q2" = "q0";
   const trace: string[] = ["q0"];
   for (const ch of tape) {
@@ -400,11 +527,7 @@ export function DfaSimulator() {
           placeholder="Enter 0s and 1s"
           className="px-3 py-1.5 rounded bg-ivory border border-ink/25 font-mono text-sm"
         />
-        <span
-          className={`px-3 py-1 rounded text-xs font-bold ${
-            accepted ? "bg-forest text-ivory" : "bg-terracotta text-ivory"
-          }`}
-        >
+        <span className={`px-3 py-1 rounded text-xs font-bold ${accepted ? "bg-forest text-ivory" : "bg-terracotta text-ivory"}`}>
           {accepted ? "ACCEPTED (q2 ∈ F)" : `REJECTED (ended at ${state})`}
         </span>
       </div>
@@ -415,10 +538,10 @@ export function DfaSimulator() {
   );
 }
 
-/* 5. SORTING ARENA SIMULATOR */
+/* 7. SORTING ARENA SIMULATOR */
 export function SortingArenaSimulator() {
   const [arr, setArr] = useState([38, 12, 45, 7, 29, 19]);
-  const [stepMsg, setStepMsg] = useState("Click 'Step Bubble Pass' or 'QuickSort' to observe.");
+  const [stepMsg, setStepMsg] = useState("Click 'Step Pass' or 'Instant O(n log n) Sort' to observe.");
 
   function bubblePass() {
     const copy = [...arr];
@@ -439,10 +562,7 @@ export function SortingArenaSimulator() {
       <div className="flex items-end gap-3 h-36 p-4 bg-[#F2E6CF] rounded border border-ink/20">
         {arr.map((v, i) => (
           <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-            <div
-              className="w-full bg-forest rounded-t border border-ink transition-all"
-              style={{ height: `${(v / 50) * 100}%` }}
-            />
+            <div className="w-full bg-forest rounded-t border border-ink transition-all" style={{ height: `${(v / 50) * 100}%` }} />
             <span className="text-xs font-mono font-bold mt-1">{v}</span>
           </div>
         ))}
@@ -477,7 +597,7 @@ export function SortingArenaSimulator() {
   );
 }
 
-/* 6. LOGIC GATE SIMULATOR */
+/* 8. LOGIC GATE SIMULATOR */
 export function LogicGateSimulator() {
   const [p, setP] = useState(true);
   const [q, setQ] = useState(false);
@@ -503,28 +623,108 @@ export function LogicGateSimulator() {
   );
 }
 
+/* 9. GRAPH & A* GRID PATHFINDER */
+export function GraphSearchSimulator() {
+  const [walls, setWalls] = useState<string[]>(["1,1", "1,2", "2,2"]);
+  const toggleWall = (r: number, c: number) => {
+    const key = `${r},${c}`;
+    if (key === "0,0" || key === "3,3") return;
+    setWalls((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+  };
+
+  return (
+    <div className="journal-card p-5 space-y-3">
+      <h3 className="font-hand text-2xl font-bold">A* Heuristic Grid (S → G)</h3>
+      <p className="text-xs text-ink-muted">Click cells to toggle mountain obstacles. Manhattan heuristic h(n) = |r - 3| + |c - 3|.</p>
+      <div className="grid grid-cols-4 gap-1.5 max-w-[220px]">
+        {[0, 1, 2, 3].map((r) =>
+          [0, 1, 2, 3].map((c) => {
+            const key = `${r},${c}`;
+            const isWall = walls.includes(key);
+            const isStart = r === 0 && c === 0;
+            const isGoal = r === 3 && c === 3;
+            const h = Math.abs(r - 3) + Math.abs(c - 3);
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => toggleWall(r, c)}
+                className={`h-12 rounded border text-[11px] font-mono font-bold ${
+                  isStart
+                    ? "bg-forest text-ivory"
+                    : isGoal
+                    ? "bg-terracotta text-ivory"
+                    : isWall
+                    ? "bg-ink text-ivory"
+                    : "bg-ivory border-ink/25"
+                }`}
+              >
+                {isStart ? "S" : isGoal ? "G" : isWall ? "▲" : `h=${h}`}
+              </button>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ConceptSimulatorRouter({ type }: { type: string }) {
-  switch (type) {
-    case "linked_list":
-      return <LinkedListSimulator />;
-    case "cpu_scheduling":
-      return <CpuSchedulingSimulator />;
-    case "sql_playground":
-      return <SqlPlaygroundSimulator />;
-    case "automata_dfa":
-      return <DfaSimulator />;
-    case "sorting_arena":
-      return <SortingArenaSimulator />;
-    case "logic_gates":
-      return <LogicGateSimulator />;
-    default:
-      return (
-        <div className="journal-parchment p-5 text-sm">
-          <p className="font-hand text-2xl font-bold mb-1">Interactive Thought Experiment</p>
-          <p className="text-ink-muted">
-            Trace the worked examples above in your notes, then test your understanding in the Practice & Challenge stages below!
-          </p>
-        </div>
-      );
-  }
+  const [override, setOverride] = useState<string>(type === "none" ? "linked_list" : type);
+
+  const renderSim = () => {
+    switch (override) {
+      case "linked_list":
+        return <LinkedListSimulator />;
+      case "stack_queue":
+        return <StackQueueSimulator />;
+      case "cpu_scheduling":
+        return <CpuSchedulingSimulator />;
+      case "page_replacement":
+        return <PageReplacementSimulator />;
+      case "sql_playground":
+        return <SqlPlaygroundSimulator />;
+      case "automata_dfa":
+        return <DfaSimulator />;
+      case "sorting_arena":
+        return <SortingArenaSimulator />;
+      case "logic_gates":
+        return <LogicGateSimulator />;
+      case "graph_search":
+        return <GraphSearchSimulator />;
+      default:
+        return <LinkedListSimulator />;
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-xs font-semibold text-ink-muted mr-1">Switch Lab:</span>
+        {[
+          { id: "linked_list", label: "Linked List" },
+          { id: "stack_queue", label: "Stack & Queue" },
+          { id: "sorting_arena", label: "Sorting" },
+          { id: "cpu_scheduling", label: "CPU Scheduling" },
+          { id: "page_replacement", label: "Page Replacement" },
+          { id: "sql_playground", label: "SQL" },
+          { id: "automata_dfa", label: "DFA" },
+          { id: "logic_gates", label: "Logic Gates" },
+          { id: "graph_search", label: "A* Search" },
+        ].map((lab) => (
+          <button
+            key={lab.id}
+            type="button"
+            onClick={() => setOverride(lab.id)}
+            className={`px-2.5 py-1 rounded text-[11px] font-semibold ${
+              override === lab.id ? "ink-btn" : "parchment-btn"
+            }`}
+          >
+            {lab.label}
+          </button>
+        ))}
+      </div>
+      {renderSim()}
+    </div>
+  );
 }

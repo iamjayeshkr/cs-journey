@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Send, Sparkles, X, HelpCircle } from "lucide-react";
+import { Send, X, HelpCircle } from "lucide-react";
+import { Illustration } from "./IllustratedAssets";
 
 interface Message {
   role: "user" | "assistant";
@@ -26,8 +27,18 @@ export function CSCompanionDrawer({
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [hintLevel, setHintLevel] = useState(1);
+  const [mood, setMood] = useState<"explaining" | "thinking" | "encouraging" | "confused">("explaining");
 
   if (!open) return null;
+
+  const moodSrc =
+    mood === "thinking"
+      ? "/assets/companions/mentor-thinking.png"
+      : mood === "encouraging"
+      ? "/assets/companions/mentor-encouraging.png"
+      : mood === "confused"
+      ? "/assets/companions/mentor-confused.png"
+      : "/assets/companions/mentor-explaining.png";
 
   async function sendMessage(text: string) {
     const trimmed = text.trim();
@@ -35,6 +46,7 @@ export function CSCompanionDrawer({
     setMessages((prev) => [...prev, { role: "user", text: trimmed }]);
     setInput("");
     setLoading(true);
+    setMood("thinking");
     try {
       const res = await fetch("/api/companion", {
         method: "POST",
@@ -48,12 +60,16 @@ export function CSCompanionDrawer({
       const data = await res.json();
       if (data.mode === "progressive_hint") {
         setHintLevel((h) => Math.min(3, h + 1));
+        setMood("encouraging");
+      } else {
+        setMood("explaining");
       }
       setMessages((prev) => [
         ...prev,
         { role: "assistant", text: data.reply || "Let's reason through that step by step." },
       ]);
     } catch {
+      setMood("confused");
       setMessages((prev) => [
         ...prev,
         { role: "assistant", text: "Unable to reach the mentor desk right now. Please try again." },
@@ -67,13 +83,15 @@ export function CSCompanionDrawer({
     <div className="fixed inset-0 z-50 flex justify-end bg-ink/30 backdrop-blur-[1px]">
       <div className="w-full max-w-md bg-[#FAF4E8] border-l-2 border-ink/30 h-full flex flex-col shadow-2xl">
         <div className="p-4 border-b border-ink/20 bg-parchment flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-terracotta/20 border border-ink/30 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-terracotta" />
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-[#FAF4E8] border border-ink/30 flex items-center justify-center overflow-hidden">
+              <Illustration src={moodSrc} alt="CS Mentor Companion" width={46} height={46} />
             </div>
             <div>
-              <h3 className="font-hand text-xl font-bold leading-none">CS Mentor</h3>
-              <p className="text-xs text-ink-muted">Progressive Hints & Concept Guide</p>
+              <h3 className="font-hand text-2xl font-bold leading-none">CS Mentor</h3>
+              <p className="text-xs text-ink-muted capitalize">
+                {mood === "thinking" ? "Consulting scrolls..." : mood === "encouraging" ? "Guiding with hints" : "Ready to explain"}
+              </p>
             </div>
           </div>
           <button

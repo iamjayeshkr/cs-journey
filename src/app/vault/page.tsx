@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Layers, RotateCw } from "lucide-react";
+import Link from "next/link";
+import { Bookmark, Layers, NotebookPen, RotateCw } from "lucide-react";
 import { JournalShell, UserProfile } from "@/components/JournalShell";
 
 interface RevisionItem {
@@ -26,18 +27,24 @@ export default function MemoryVaultPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [revisions, setRevisions] = useState<RevisionItem[]>([]);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [notes, setNotes] = useState<Array<{ id: string; title: string; content: string }>>([]);
+  const [bookmarks, setBookmarks] = useState<Array<{ id: string; target_id: string; label: string }>>([]);
   const [cardIdx, setCardIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [msg, setMsg] = useState("");
 
   async function loadVault() {
-    const [me, rev] = await Promise.all([
+    const [me, rev, nRes, bRes] = await Promise.all([
       fetch("/api/auth/me").then((r) => r.json()),
       fetch("/api/revisions").then((r) => r.json()),
+      fetch("/api/notes").then((r) => r.json()),
+      fetch("/api/bookmarks").then((r) => r.json()),
     ]);
     setUser(me.user ?? null);
     setRevisions(rev.revisions ?? []);
     setFlashcards(rev.flashcards ?? []);
+    setNotes(nRes.notes ?? []);
+    setBookmarks(bRes.bookmarks ?? []);
   }
 
   useEffect(() => {
@@ -69,7 +76,7 @@ export default function MemoryVaultPage() {
             <Layers className="w-7 h-7 text-forest" /> Memory Vault — Spaced Repetition
           </h1>
           <p className="text-sm text-ink-muted">
-            Retain concepts permanently with 1, 3, 7, 14, and 30-day review intervals.
+            Retain concepts permanently with 1, 3, 7, 14, and 30-day review intervals, flashcards, notes, and bookmarks.
           </p>
         </div>
 
@@ -115,25 +122,13 @@ export default function MemoryVaultPage() {
 
             {activeCard && (
               <div className="grid grid-cols-3 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => reviewCard(activeCard.concept_id, "again")}
-                  className="terracotta-btn py-2 rounded text-xs font-semibold"
-                >
+                <button type="button" onClick={() => reviewCard(activeCard.concept_id, "again")} className="terracotta-btn py-2 rounded text-xs font-semibold">
                   Again (1d)
                 </button>
-                <button
-                  type="button"
-                  onClick={() => reviewCard(activeCard.concept_id, "good")}
-                  className="parchment-btn py-2 rounded text-xs font-semibold"
-                >
+                <button type="button" onClick={() => reviewCard(activeCard.concept_id, "good")} className="parchment-btn py-2 rounded text-xs font-semibold">
                   Good (Next)
                 </button>
-                <button
-                  type="button"
-                  onClick={() => reviewCard(activeCard.concept_id, "easy")}
-                  className="forest-btn py-2 rounded text-xs font-semibold"
-                >
+                <button type="button" onClick={() => reviewCard(activeCard.concept_id, "easy")} className="forest-btn py-2 rounded text-xs font-semibold">
                   Easy (+2 steps)
                 </button>
               </div>
@@ -166,6 +161,38 @@ export default function MemoryVaultPage() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Saved Notes & Bookmarks Summary */}
+        <div className="grid md:grid-cols-2 gap-5">
+          <div className="journal-card p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-hand text-2xl font-bold flex items-center gap-2">
+                <NotebookPen className="w-5 h-5 text-terracotta" /> Recent Notes
+              </h2>
+              <Link href="/notes" className="text-xs font-semibold text-terracotta hover:underline">Manage →</Link>
+            </div>
+            {notes.slice(0, 3).map((n) => (
+              <div key={n.id} className="p-3 rounded bg-ivory border border-ink/15 text-xs">
+                <p className="font-bold">{n.title}</p>
+                <p className="text-ink-muted line-clamp-2 mt-0.5">{n.content}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="journal-card p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-hand text-2xl font-bold flex items-center gap-2">
+                <Bookmark className="w-5 h-5 text-terracotta" /> Bookmarked Concepts
+              </h2>
+              <Link href="/notes" className="text-xs font-semibold text-terracotta hover:underline">View All →</Link>
+            </div>
+            {bookmarks.map((b) => (
+              <Link key={b.id} href={`/concepts/${b.target_id}`} className="block p-3 rounded bg-ivory border border-ink/15 hover:bg-parchment text-xs font-semibold">
+                {b.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { CheckCircle2, HelpCircle, Puzzle as PuzzleIcon } from "lucide-react";
+import { CheckCircle2, Heart, HelpCircle, Swords } from "lucide-react";
 import { JournalShell, UserProfile } from "@/components/JournalShell";
+import { Illustration } from "@/components/IllustratedAssets";
 
 interface PuzzleItem {
   id: string;
@@ -20,6 +21,42 @@ interface PuzzleItem {
   xp_reward: number;
   solved: boolean;
 }
+
+const BOSS_BATTLES = [
+  {
+    id: "boss-pointer-lord",
+    name: "The Pointer Lord",
+    chapter: "Kingdom VII • Linked Lists & Pointers",
+    img: "/assets/bosses/dragon-boss.png",
+    description: "Defend the Mountain Express Railway by mastering insertion, deletion edge cases, and O(1) node tricks.",
+    difficulty: "JRF Guardian",
+    questionsCount: 3,
+    timeLimit: "10 mins",
+    mockId: "mock-dsa-01",
+  },
+  {
+    id: "boss-scheduler",
+    name: "The Scheduler Warden",
+    chapter: "Kingdom V • CPU Scheduling & Memory",
+    img: "/assets/bosses/stone-golem.png",
+    description: "Outsmart the Gearworks Golem on SRTF optimality, Convoy Effect, and Belady's Anomaly.",
+    difficulty: "Hard",
+    questionsCount: 4,
+    timeLimit: "12 mins",
+    mockId: "mock-full-01",
+  },
+  {
+    id: "boss-oracle",
+    name: "The Halting Oracle",
+    chapter: "Kingdom VIII • Automata & Compilers",
+    img: "/assets/bosses/dark-wizard.png",
+    description: "Prove your mastery over DFA minimization, CFL closure properties, and decidability.",
+    difficulty: "JRF Guardian",
+    questionsCount: 4,
+    timeLimit: "15 mins",
+    mockId: "mock-full-01",
+  },
+];
 
 export default function PuzzlesPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -69,16 +106,25 @@ export default function PuzzlesPage() {
 
   return (
     <JournalShell user={user}>
-      <div className="space-y-6">
-        <div>
-          <h1 className="font-hand text-4xl font-bold flex items-center gap-2">
-            <PuzzleIcon className="w-7 h-7 text-terracotta" /> Puzzle Dungeon
-          </h1>
-          <p className="text-sm text-ink-muted">
-            Interactive CS reasoning challenges. Using fewer hints awards higher XP!
-          </p>
+      <div className="space-y-8">
+        {/* Illustrated Puzzle Dungeon Header */}
+        <div className="journal-parchment p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 washi-tape">
+          <div className="flex items-center gap-4">
+            <Illustration src="/assets/puzzles/portal.png" alt="Dungeon Portal" width={78} height={78} />
+            <div>
+              <h1 className="font-hand text-4xl sm:text-5xl font-bold leading-none">Puzzle Dungeon</h1>
+              <p className="text-sm text-ink-muted mt-1">
+                Interactive CS reasoning challenges. Using fewer hints awards higher XP!
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Illustration src="/assets/puzzles/treasure-chest.png" alt="Treasure Chest" width={54} height={54} />
+            <Illustration src="/assets/puzzles/golden-key.png" alt="Golden Key" width={28} height={54} />
+          </div>
         </div>
 
+        {/* Puzzles Grid */}
         <div className="grid md:grid-cols-2 gap-5">
           {puzzles.map((p) => {
             const hintCount = hintsShown[p.id] ?? 0;
@@ -92,17 +138,20 @@ export default function PuzzlesPage() {
                         <CheckCircle2 className="w-4 h-4" /> Solved
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded bg-parchment font-bold">+{p.xp_reward} XP</span>
+                      <span className="px-2 py-0.5 rounded bg-parchment font-bold">
+                        {p.difficulty} • +{p.xp_reward} XP
+                      </span>
                     )}
                   </div>
 
                   <h2 className="font-hand text-2xl font-bold">{p.title}</h2>
                   <p className="text-sm font-serif">{p.prompt}</p>
 
-                  {/* Pointer Trace Interactive UI */}
                   {p.puzzle_type === "pointer_trace" && p.config.initialList && (
                     <div className="p-3 rounded bg-[#F2E6CF] border border-ink/20 space-y-2">
-                      <p className="text-xs font-semibold">Click the node AFTER which to insert {p.config.insertValue}:</p>
+                      <p className="text-xs font-semibold">
+                        Click the node AFTER which to insert {p.config.insertValue}:
+                      </p>
                       <div className="flex flex-wrap items-center gap-2">
                         {p.config.initialList.map((val, idx) => {
                           const candidate = [...p.config.initialList!];
@@ -125,7 +174,6 @@ export default function PuzzlesPage() {
                     </div>
                   )}
 
-                  {/* Multiple choice sequence/logic puzzle */}
                   {p.config.choices && (
                     <div className="space-y-2">
                       {p.config.choices.map((ch) => (
@@ -145,7 +193,6 @@ export default function PuzzlesPage() {
                     </div>
                   )}
 
-                  {/* Progressive Hints */}
                   {hintCount > 0 && (
                     <div className="sticky-note p-3 rounded text-xs space-y-1">
                       {p.hints.slice(0, hintCount).map((h, i) => (
@@ -183,6 +230,58 @@ export default function PuzzlesPage() {
             );
           })}
         </div>
+
+        {/* Illustrated Boss Challenge Arena (Screen 09) */}
+        <section id="boss-arena" className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Illustration src="/assets/bosses/boss-banner.png" alt="Boss Challenge" width={92} height={58} />
+            <div>
+              <h2 className="font-hand text-3xl font-bold leading-none">Chapter Boss Challenges</h2>
+              <p className="text-xs text-ink-muted mt-1">
+                Prove multi-concept mastery against the Kingdom Guardians in timed evaluations.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-5">
+            {BOSS_BATTLES.map((boss) => (
+              <div key={boss.id} className="journal-parchment p-5 flex flex-col justify-between space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase text-terracotta">{boss.difficulty}</span>
+                    <div className="flex items-center gap-0.5 text-terracotta" aria-label="Boss Health">
+                      <Heart className="w-3.5 h-3.5 fill-current" />
+                      <Heart className="w-3.5 h-3.5 fill-current" />
+                      <Heart className="w-3.5 h-3.5 fill-current" />
+                    </div>
+                  </div>
+                  <div className="flex justify-center py-2 bg-[#FAF4E8]/80 rounded border border-ink/20">
+                    <Illustration src={boss.img} alt={boss.name} width={110} height={110} animate />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-ink-muted">{boss.chapter}</p>
+                    <h3 className="font-hand text-2xl font-bold">{boss.name}</h3>
+                    <p className="font-serif text-xs text-ink-muted mt-1 leading-relaxed">{boss.description}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-2 border-t border-ink/15">
+                  <div className="flex justify-between text-[11px] font-semibold text-ink-muted">
+                    <span>{boss.questionsCount} Questions</span>
+                    <span>Limit: {boss.timeLimit}</span>
+                  </div>
+                  <a
+                    href="/exam-arena"
+                    className="terracotta-btn w-full py-2 rounded text-xs font-semibold flex items-center justify-center gap-1.5"
+                  >
+                    <Swords className="w-4 h-4" />
+                    <span>Start Boss Fight</span>
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </JournalShell>
   );

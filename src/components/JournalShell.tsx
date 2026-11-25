@@ -26,6 +26,7 @@ import {
   X,
 } from "lucide-react";
 import { CSCompanionDrawer } from "./CSCompanionDrawer";
+import { CharacterIllustration, Illustration } from "./IllustratedAssets";
 
 export interface UserProfile {
   id: string;
@@ -112,8 +113,8 @@ export function JournalShell({
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
             <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 rounded-md bg-ink text-ivory flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                <Compass className="w-5 h-5 text-mustard" />
+              <div className="w-10 h-10 rounded-md bg-[#FAF4E8] border border-ink/25 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform overflow-hidden p-0.5">
+                <Illustration src="/assets/ui/compass.png" alt="The CS Journey Compass" width={36} height={36} />
               </div>
               <div>
                 <span className="font-hand text-2xl font-bold leading-none block text-ink">
@@ -260,8 +261,8 @@ export function JournalShell({
           {user ? (
             <div className="journal-card p-3.5 mb-5 washi-tape">
               <div className="flex items-center gap-3 mt-1">
-                <div className="w-11 h-11 rounded-md bg-parchment border border-ink/30 flex items-center justify-center font-hand text-xl font-bold text-ink">
-                  {user.full_name.slice(0, 2).toUpperCase()}
+                <div className="w-14 h-14 rounded-md bg-[#F2E6CF] border border-ink/30 flex items-center justify-center overflow-hidden shrink-0">
+                  <CharacterIllustration characterKey={user.avatar_key} alt={user.full_name} size={54} />
                 </div>
                 <div className="min-w-0">
                   <p className="font-hand text-xl font-bold leading-tight truncate">{user.full_name}</p>

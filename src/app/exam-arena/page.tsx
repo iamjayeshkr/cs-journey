@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Award, Clock, Play, CheckCircle2 } from "lucide-react";
+import { Award, Clock, Flag, Play, CheckCircle2 } from "lucide-react";
 import { JournalShell, UserProfile } from "@/components/JournalShell";
 
 interface MockTest {
@@ -25,7 +25,9 @@ export default function ExamArenaPage() {
   const [attempts, setAttempts] = useState<Array<{ id: string; mock_title: string; score: number; total_marks: number; completed_at: string }>>([]);
   const [activeTest, setActiveTest] = useState<MockTest | null>(null);
   const [questions, setQuestions] = useState<MockQuestion[]>([]);
+  const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [marked, setMarked] = useState<Record<string, boolean>>({});
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [result, setResult] = useState<{
     score: number;
@@ -60,7 +62,9 @@ export default function ExamArenaPage() {
     const data = await res.json();
     setActiveTest(data.mock_test);
     setQuestions(data.questions ?? []);
+    setCurrentIdx(0);
     setAnswers({});
+    setMarked({});
     setResult(null);
     setSecondsLeft((data.mock_test?.duration_minutes ?? 10) * 60);
   }
@@ -88,6 +92,7 @@ export default function ExamArenaPage() {
 
   const mins = Math.floor(secondsLeft / 60);
   const secs = secondsLeft % 60;
+  const activeQ = questions[currentIdx];
 
   return (
     <JournalShell user={user}>
@@ -106,7 +111,9 @@ export default function ExamArenaPage() {
             <div className="journal-parchment p-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="font-hand text-2xl font-bold">{activeTest.title}</h2>
-                <p className="text-xs text-ink-muted">{questions.length} Questions • {activeTest.total_marks} Marks</p>
+                <p className="text-xs text-ink-muted">
+                  Question {currentIdx + 1} of {questions.length} • {activeTest.total_marks} Marks
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <span className="px-3 py-1.5 rounded bg-ink text-ivory font-mono text-sm font-bold inline-flex items-center gap-1.5">
@@ -141,37 +148,126 @@ export default function ExamArenaPage() {
               </div>
             )}
 
-            <div className="space-y-4">
-              {questions.map((q, idx) => (
-                <div key={q.id} className="journal-card p-5 space-y-3">
-                  <p className="text-sm font-semibold">
-                    {idx + 1}. {q.prompt}
-                  </p>
-                  <div className="grid sm:grid-cols-2 gap-2">
-                    {q.options.map((o) => (
+            <div className="grid lg:grid-cols-12 gap-5">
+              {/* Active Question or Full Review */}
+              <div className="lg:col-span-8 space-y-4">
+                {result ? (
+                  questions.map((q, idx) => (
+                    <div key={q.id} className="journal-card p-5 space-y-3">
+                      <p className="text-sm font-semibold">
+                        {idx + 1}. {q.prompt}
+                      </p>
+                      <div className="grid sm:grid-cols-2 gap-2">
+                        {q.options.map((o) => (
+                          <div
+                            key={o.id}
+                            className={`p-2.5 rounded border text-xs ${
+                              answers[q.id] === o.id ? "bg-ink text-ivory border-ink" : "bg-ivory border-ink/20"
+                            }`}
+                          >
+                            <strong className="mr-1.5">{o.label}.</strong>
+                            {o.option_text}
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs bg-parchment/70 p-2.5 rounded">
+                        <strong>Explanation:</strong> {q.explanation}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  activeQ && (
+                    <div className="journal-card p-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-ink-muted">Question {currentIdx + 1}</span>
+                        <button
+                          type="button"
+                          onClick={() => setMarked((p) => ({ ...p, [activeQ.id]: !p[activeQ.id] }))}
+                          className={`px-3 py-1 rounded text-xs font-semibold inline-flex items-center gap-1 ${
+                            marked[activeQ.id] ? "bg-mustard text-ink border border-ink" : "parchment-btn"
+                          }`}
+                        >
+                          <Flag className="w-3.5 h-3.5" />
+                          {marked[activeQ.id] ? "Marked for Review" : "Mark for Review"}
+                        </button>
+                      </div>
+                      <p className="font-serif text-base font-medium">{activeQ.prompt}</p>
+                      <div className="space-y-2">
+                        {activeQ.options.map((o) => (
+                          <button
+                            key={o.id}
+                            type="button"
+                            onClick={() => setAnswers((prev) => ({ ...prev, [activeQ.id]: o.id }))}
+                            className={`w-full p-3 rounded border text-left text-xs ${
+                              answers[activeQ.id] === o.id
+                                ? "bg-ink text-ivory border-ink"
+                                : "bg-ivory border-ink/20 hover:bg-parchment"
+                            }`}
+                          >
+                            <strong className="mr-2">{o.label}.</strong>
+                            {o.option_text}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex justify-between pt-2">
+                        <button
+                          type="button"
+                          disabled={currentIdx === 0}
+                          onClick={() => setCurrentIdx((i) => Math.max(0, i - 1))}
+                          className="parchment-btn px-4 py-1.5 rounded text-xs font-semibold disabled:opacity-40"
+                        >
+                          ← Previous
+                        </button>
+                        <button
+                          type="button"
+                          disabled={currentIdx >= questions.length - 1}
+                          onClick={() => setCurrentIdx((i) => Math.min(questions.length - 1, i + 1))}
+                          className="ink-btn px-4 py-1.5 rounded text-xs font-semibold disabled:opacity-40"
+                        >
+                          Next →
+                        </button>
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+
+              {/* Question Navigation Palette */}
+              <div className="lg:col-span-4 journal-card p-5 h-fit space-y-3">
+                <h3 className="font-hand text-2xl font-bold">Question Palette</h3>
+                <div className="grid grid-cols-5 gap-2">
+                  {questions.map((q, idx) => {
+                    const isAns = Boolean(answers[q.id]);
+                    const isMarked = Boolean(marked[q.id]);
+                    const isCurr = idx === currentIdx;
+                    return (
                       <button
-                        key={o.id}
+                        key={q.id}
                         type="button"
-                        disabled={Boolean(result)}
-                        onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: o.id }))}
-                        className={`p-2.5 rounded border text-left text-xs ${
-                          answers[q.id] === o.id
-                            ? "bg-ink text-ivory border-ink"
-                            : "bg-ivory border-ink/20 hover:bg-parchment"
+                        onClick={() => setCurrentIdx(idx)}
+                        className={`h-9 rounded text-xs font-bold border ${
+                          isCurr
+                            ? "ring-2 ring-terracotta border-ink"
+                            : "border-ink/25"
+                        } ${
+                          isMarked
+                            ? "bg-mustard text-ink"
+                            : isAns
+                            ? "bg-forest text-ivory"
+                            : "bg-ivory text-ink"
                         }`}
                       >
-                        <strong className="mr-1.5">{o.label}.</strong>
-                        {o.option_text}
+                        {idx + 1}
                       </button>
-                    ))}
-                  </div>
-                  {result && (
-                    <p className="text-xs bg-parchment/70 p-2.5 rounded">
-                      <strong>Explanation:</strong> {q.explanation}
-                    </p>
-                  )}
+                    );
+                  })}
                 </div>
-              ))}
+                <div className="flex flex-wrap gap-3 text-[11px] text-ink-muted pt-2 border-t border-ink/15">
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-forest inline-block" /> Answered</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-mustard inline-block" /> Marked</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-ivory border border-ink/30 inline-block" /> Unvisited</span>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
