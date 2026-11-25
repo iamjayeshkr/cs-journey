@@ -9,6 +9,37 @@ interface Message {
   text: string;
 }
 
+function FormattedMessage({ text }: { text: string }) {
+  const lines = text.split("\n");
+  return (
+    <div className="space-y-1.5 leading-relaxed">
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={i} className="h-1" />;
+        const isBullet = trimmed.startsWith("- ") || trimmed.startsWith("* ");
+        const content = isBullet ? trimmed.slice(2) : trimmed;
+        const parts = content.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, j) => {
+          if (part.startsWith("**") && part.endsWith("**")) {
+            return <strong key={j} className="font-bold text-ink">{part.slice(2, -2)}</strong>;
+          }
+          if (part.startsWith("`") && part.endsWith("`")) {
+            return <code key={j} className="px-1 py-0.5 rounded bg-parchment font-mono text-[11px]">{part.slice(1, -1)}</code>;
+          }
+          return <React.Fragment key={j}>{part}</React.Fragment>;
+        });
+        return isBullet ? (
+          <div key={i} className="flex items-start gap-1.5 pl-1">
+            <span className="text-terracotta font-bold">•</span>
+            <span>{parts}</span>
+          </div>
+        ) : (
+          <p key={i}>{parts}</p>
+        );
+      })}
+    </div>
+  );
+}
+
 export function CSCompanionDrawer({
   open,
   onClose,
@@ -108,13 +139,13 @@ export function CSCompanionDrawer({
           {messages.map((m, idx) => (
             <div
               key={idx}
-              className={`p-3 rounded-md text-sm whitespace-pre-wrap leading-relaxed ${
+              className={`p-3 rounded-md text-sm ${
                 m.role === "user"
                   ? "bg-ink text-ivory ml-8"
                   : "journal-parchment mr-6 text-ink"
               }`}
             >
-              {m.text}
+              {m.role === "user" ? <p>{m.text}</p> : <FormattedMessage text={m.text} />}
             </div>
           ))}
           {loading && (

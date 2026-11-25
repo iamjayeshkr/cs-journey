@@ -104,6 +104,7 @@ function ConceptPageInner() {
   const [puzzleFeedback, setPuzzleFeedback] = useState<string>("");
   const [noteText, setNoteText] = useState("");
   const [learningLevel, setLearningLevel] = useState<1 | 2 | 3 | 4>(1);
+  const [showPauseThink, setShowPauseThink] = useState(false);
   const [toast, setToast] = useState("");
 
   async function loadAll() {
@@ -376,27 +377,77 @@ function ConceptPageInner() {
                       </div>
                     )}
 
-                    {/* Selected Learning Level Content */}
-                    <div className="p-4 rounded bg-ivory border-2 border-ink/25 space-y-2">
-                      <span className="text-[11px] uppercase font-bold text-terracotta">
-                        {learningLevel === 1
-                          ? "Level 1 — Absolute Beginner (Zero Jargon)"
-                          : learningLevel === 2
-                          ? "Level 2 — Foundation (Formal Terms & Rules)"
-                          : learningLevel === 3
-                          ? "Level 3 — Intermediate (Algorithms & Analysis)"
-                          : "Level 4 — Advanced / UGC NET JRF Mastery"}
-                      </span>
-                      <p className="font-serif text-sm leading-relaxed">
-                        {learningLevel === 1
+                    {/* Selected Learning Level Content — Teacher-Led Step-by-Step Formatting */}
+                    {(() => {
+                      const rawText =
+                        learningLevel === 1
                           ? data.lesson.level_1_beginner || data.lesson.discover_story
                           : learningLevel === 2
                           ? data.lesson.level_2_foundation || data.lesson.understand_intuition
                           : learningLevel === 3
                           ? data.lesson.level_3_intermediate || data.lesson.formal_definition
-                          : data.lesson.level_4_jrf || data.lesson.formal_definition}
-                      </p>
-                    </div>
+                          : data.lesson.level_4_jrf || data.lesson.formal_definition;
+                      const sentences = rawText
+                        .split(/(?<=[.!?])\s+/)
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+                      const teacherIntro =
+                        learningLevel === 1
+                          ? "Sit back and picture this simply — no heavy words yet:"
+                          : learningLevel === 2
+                          ? "Now that the picture is clear, let's learn the proper CS names for what you just imagined:"
+                          : learningLevel === 3
+                          ? "Let's roll up our sleeves and trace how this actually works step by step:"
+                          : "Here is the exact UGC NET / JRF depth that separates top rankers:";
+                      return (
+                        <div className="p-5 rounded-md bg-ivory border-2 border-ink/25 space-y-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[11px] uppercase font-bold text-terracotta">
+                              {learningLevel === 1
+                                ? "Level 1 — Absolute Beginner (Zero Jargon)"
+                                : learningLevel === 2
+                                ? "Level 2 — Foundation (Formal Terms & Rules)"
+                                : learningLevel === 3
+                                ? "Level 3 — Intermediate (Algorithms & Analysis)"
+                                : "Level 4 — Advanced / UGC NET JRF Mastery"}
+                            </span>
+                            <span className="text-[11px] font-semibold text-forest">Teacher&apos;s Explanation</span>
+                          </div>
+
+                          <p className="font-hand text-xl text-ink font-semibold">{teacherIntro}</p>
+
+                          <div className="space-y-2">
+                            {sentences.map((sent, idx) => (
+                              <div key={idx} className="flex items-start gap-2.5 p-2.5 rounded bg-[#FAF4E8] border border-ink/15">
+                                <span className="w-5 h-5 rounded-full bg-parchment border border-ink/25 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                                  {idx + 1}
+                                </span>
+                                <p className="font-serif text-sm leading-relaxed text-ink">{sent}</p>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Interactive Pause & Think Check */}
+                          <div className="pt-2">
+                            <button
+                              type="button"
+                              onClick={() => setShowPauseThink(!showPauseThink)}
+                              className="parchment-btn px-3 py-1.5 rounded text-xs font-semibold"
+                            >
+                              {showPauseThink ? "Hide Quick Check" : "Wait — Quick 5-Second Check!"}
+                            </button>
+                            {showPauseThink && (
+                              <div className="mt-2 sticky-note p-3 rounded text-xs space-y-1">
+                                <p className="font-bold">Before moving on, ask yourself:</p>
+                                <p>
+                                  Can I explain <strong>{data.concept.title}</strong> in one simple sentence without reading the screen? Try the <strong>Feynman Teach-Back</strong> below!
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {data.lesson.pseudocode && (
                       <div className="p-4 rounded bg-[#2B2118] text-[#F5EBD8] font-mono text-xs whitespace-pre-wrap">
