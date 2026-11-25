@@ -113,8 +113,8 @@ export function JournalShell({
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
             <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2.5 group">
-              <div className="w-10 h-10 rounded-md bg-[#FAF4E8] border border-ink/25 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform overflow-hidden p-0.5">
-                <Illustration src="/assets/ui/compass.png" alt="The CS Journey Compass" width={36} height={36} />
+              <div className="w-11 h-10 rounded-md bg-[#FAF4E8] border border-ink/25 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform overflow-hidden p-0.5">
+                <Illustration src="/assets/ui/logo-mark.png" alt="The CS Journey Logo" width={40} height={36} />
               </div>
               <div>
                 <span className="font-hand text-2xl font-bold leading-none block text-ink">

@@ -3,7 +3,8 @@
 import React, { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Compass, KeyRound, Sparkles, UserPlus } from "lucide-react";
+import { KeyRound, Sparkles, UserPlus } from "lucide-react";
+import { Illustration } from "@/components/IllustratedAssets";
 
 function AuthForm() {
   const router = useRouter();
@@ -64,11 +65,8 @@ function AuthForm() {
 
   return (
     <div className="min-h-screen bg-ivory text-ink flex flex-col items-center justify-center p-4">
-      <Link href="/" className="flex items-center gap-2.5 mb-6">
-        <div className="w-10 h-10 rounded-md bg-ink text-ivory flex items-center justify-center">
-          <Compass className="w-6 h-6 text-mustard" />
-        </div>
-        <span className="font-hand text-3xl font-bold">The CS Journey</span>
+      <Link href="/" className="flex flex-col items-center mb-4">
+        <Illustration src="/assets/ui/final-logo.png" alt="The CS Journey" width={210} height={140} priority />
       </Link>
 
       <div className="w-full max-w-md journal-card p-6 sm:p-8 washi-tape">

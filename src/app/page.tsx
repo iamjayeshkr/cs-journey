@@ -43,8 +43,8 @@ export default function LandingPage() {
       <header className="border-b border-ink/20 bg-[#F2E6CF]/95 sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-md bg-[#FAF4E8] border border-ink/25 flex items-center justify-center p-0.5">
-              <Illustration src="/assets/ui/compass.png" alt="Compass" width={34} height={34} />
+            <div className="w-11 h-10 rounded-md bg-[#FAF4E8] border border-ink/25 flex items-center justify-center p-0.5">
+              <Illustration src="/assets/ui/logo-mark.png" alt="The CS Journey Logo" width={40} height={36} />
             </div>
             <span className="font-hand text-2xl font-bold">The CS Journey</span>
           </div>
@@ -122,10 +122,10 @@ export default function LandingPage() {
           <div className="journal-card p-5 washi-tape relative overflow-hidden bg-gradient-to-b from-[#FAF4E8] to-[#EFE2C6]">
             <div className="flex flex-col items-center">
               <Illustration
-                src="/assets/ui/cs-journey-banner.png"
-                alt="The CS Journey Banner"
-                width={220}
-                height={110}
+                src="/assets/ui/final-logo.png"
+                alt="The CS Journey — Master Computer Science"
+                width={280}
+                height={186}
                 priority
               />
               <div className="relative w-full flex items-end justify-between gap-2 mt-2 px-2">
