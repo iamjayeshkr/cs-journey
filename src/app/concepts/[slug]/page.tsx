@@ -18,6 +18,7 @@ import {
 import { JournalShell, UserProfile } from "@/components/JournalShell";
 import { ConceptSimulatorRouter } from "@/components/simulators/ConceptSimulators";
 import { Illustration, KingdomIllustration } from "@/components/IllustratedAssets";
+import { JourneyTraveler } from "@/components/JourneyTraveler";
 
 const STAGES = [
   { id: "discover", label: "1. Discover", icon: Compass },
@@ -262,6 +263,13 @@ function ConceptPageInner() {
             })}
           </div>
         </div>
+
+        {/* Animated 2D Character Stage Trail */}
+        <JourneyTraveler
+          progressPct={Math.round((completed.length / 8) * 100)}
+          label={`Concept Trail (${completed.length}/8 Stages)`}
+          characterSrc="/assets/companions/foxy.png"
+        />
 
         {toast && (
           <div className="p-3 rounded bg-forest/15 border border-forest text-xs font-semibold text-ink">

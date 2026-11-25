@@ -12,6 +12,7 @@ import {
   Illustration,
   KingdomIllustration,
 } from "@/components/IllustratedAssets";
+import { JourneyTraveler } from "@/components/JourneyTraveler";
 
 interface DashboardData {
   user: UserProfile | null;
@@ -123,6 +124,13 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Animated 2D Journey Trail */}
+        <JourneyTraveler
+          progressPct={data.overall_progress}
+          label="Explorer Progress Trail"
+          characterSrc="/assets/characters/explorer-writing.png"
+        />
 
         {/* 10 Kingdoms Illustrated Cards */}
         <section className="journal-card p-5">
@@ -351,7 +359,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Embedded Interactive World Map */}
-        <WorldMapCanvas kingdoms={data.kingdoms} />
+        <WorldMapCanvas kingdoms={data.kingdoms} overallProgress={data.overall_progress} />
       </div>
     </JournalShell>
   );

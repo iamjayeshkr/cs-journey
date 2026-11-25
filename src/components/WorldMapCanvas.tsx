@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle2, Compass } from "lucide-react";
 import { Illustration, KingdomIllustration } from "./IllustratedAssets";
 
@@ -19,8 +20,27 @@ export interface MapKingdom {
   concepts_mastered?: number;
 }
 
-export function WorldMapCanvas({ kingdoms }: { kingdoms: MapKingdom[] }) {
+export function WorldMapCanvas({
+  kingdoms,
+  overallProgress = 0,
+}: {
+  kingdoms: MapKingdom[];
+  overallProgress?: number;
+}) {
   const [selected, setSelected] = useState<MapKingdom | null>(kingdoms[6] || kingdoms[0] || null);
+
+  // Interpolate 2D traveler position along the 10-kingdom trail from 0% to 100%
+  const clampedPct = Math.max(0, Math.min(100, overallProgress));
+  let travelerX = 8;
+  let travelerY = 24;
+  if (kingdoms.length > 0) {
+    const exactIdx = (clampedPct / 100) * (kingdoms.length - 1);
+    const i0 = Math.floor(exactIdx);
+    const i1 = Math.min(kingdoms.length - 1, i0 + 1);
+    const t = exactIdx - i0;
+    travelerX = kingdoms[i0].map_x + (kingdoms[i1].map_x - kingdoms[i0].map_x) * t;
+    travelerY = kingdoms[i0].map_y + (kingdoms[i1].map_y - kingdoms[i0].map_y) * t;
+  }
 
   return (
     <div className="journal-card p-4 sm:p-6 relative overflow-hidden">
@@ -101,6 +121,29 @@ export function WorldMapCanvas({ kingdoms }: { kingdoms: MapKingdom[] }) {
         <div className="absolute left-[4%] bottom-[6%] pointer-events-none opacity-90 hidden sm:block">
           <Illustration src="/assets/landscapes/hero-overlook.png" alt="Explorer" width={72} height={68} />
         </div>
+
+        {/* Animated 2D Explorer Traveler moving along the World Map path */}
+        <motion.div
+          className="absolute -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none flex flex-col items-center"
+          initial={{ left: "8%", top: "24%" }}
+          animate={{ left: `${travelerX}%`, top: `${Math.max(10, travelerY - 7)}%` }}
+          transition={{ type: "spring", stiffness: 55, damping: 14 }}
+        >
+          <motion.div
+            animate={{ y: [0, -4, 0], rotate: [-2, 2, -2] }}
+            transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
+          >
+            <Illustration
+              src="/assets/characters/explorer-writing.png"
+              alt="Explorer on World Map"
+              width={48}
+              height={48}
+            />
+          </motion.div>
+          <span className="px-2 py-0.5 rounded-full bg-terracotta text-ivory text-[10px] font-bold shadow border border-ink whitespace-nowrap">
+            You ({clampedPct}%)
+          </span>
+        </motion.div>
 
         {/* Interactive Kingdom Landmarks (Actual Extracted PNGs) */}
         {kingdoms.map((k) => {
