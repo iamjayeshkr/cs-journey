@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Award, Clock, Flag, Play, CheckCircle2 } from "lucide-react";
+import { Award, Clock, Flag, Play, CheckCircle2, ArrowLeft, ArrowRight } from "lucide-react";
 import { JournalShell, UserProfile } from "@/components/JournalShell";
+import { KINGDOMS } from "@/lib/curriculum-data";
 
 interface MockTest {
   id: string;
   title: string;
   description: string;
+  category?: string;
   duration_minutes: number;
   total_marks: number;
 }
@@ -22,7 +24,12 @@ interface MockQuestion {
 export default function ExamArenaPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [tests, setTests] = useState<MockTest[]>([]);
+  const [totalTests, setTotalTests] = useState(520);
+  const [page, setPage] = useState(1);
+  const [category, setCategory] = useState("all");
+  const [kingdomFilter, setKingdomFilter] = useState("all");
   const [attempts, setAttempts] = useState<Array<{ id: string; mock_title: string; score: number; total_marks: number; completed_at: string }>>([]);
+
   const [activeTest, setActiveTest] = useState<MockTest | null>(null);
   const [questions, setQuestions] = useState<MockQuestion[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -37,19 +44,22 @@ export default function ExamArenaPage() {
     xp_awarded: number;
   } | null>(null);
 
-  async function loadList() {
+  async function loadList(p = page) {
+    const params = new URLSearchParams({ page: String(p), category, kingdom_id: kingdomFilter });
     const [me, list] = await Promise.all([
       fetch("/api/auth/me").then((r) => r.json()),
-      fetch("/api/mock-tests").then((r) => r.json()),
+      fetch(`/api/mock-tests?${params.toString()}`).then((r) => r.json()),
     ]);
     setUser(me.user ?? null);
     setTests(list.mock_tests ?? []);
+    setTotalTests(list.total ?? 520);
     setAttempts(list.attempts ?? []);
   }
 
   useEffect(() => {
-    loadList();
-  }, []);
+    setPage(1);
+    loadList(1);
+  }, [category, kingdomFilter]);
 
   useEffect(() => {
     if (!activeTest || result || secondsLeft <= 0) return;
@@ -66,7 +76,7 @@ export default function ExamArenaPage() {
     setAnswers({});
     setMarked({});
     setResult(null);
-    setSecondsLeft((data.mock_test?.duration_minutes ?? 10) * 60);
+    setSecondsLeft((data.mock_test?.duration_minutes ?? 12) * 60);
   }
 
   async function submitTest() {
@@ -84,7 +94,7 @@ export default function ExamArenaPage() {
     const data = await res.json();
     if (res.ok) {
       setResult(data);
-      loadList();
+      loadList(page);
     } else {
       alert(data.error || "Please sign in to submit mock tests.");
     }
@@ -93,17 +103,20 @@ export default function ExamArenaPage() {
   const mins = Math.floor(secondsLeft / 60);
   const secs = secondsLeft % 60;
   const activeQ = questions[currentIdx];
+  const totalPages = Math.max(1, Math.ceil(totalTests / 12));
 
   return (
     <JournalShell user={user}>
       <div className="space-y-6">
-        <div>
-          <h1 className="font-hand text-4xl font-bold flex items-center gap-2">
-            <Award className="w-7 h-7 text-terracotta" /> Exam Arena — UGC NET Mock Tests
-          </h1>
-          <p className="text-sm text-ink-muted">
-            Timed Paper 2 examinations (+2 marks per correct answer, no negative marking).
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h1 className="font-hand text-4xl font-bold flex items-center gap-2">
+              <Award className="w-7 h-7 text-terracotta" /> Exam Arena — {totalTests} Mock Tests
+            </h1>
+            <p className="text-sm text-ink-muted">
+              50 Full-Syllabus UGC NET Sprints + 470 Unit, JRF & Placement Timed Mock Tests.
+            </p>
+          </div>
         </div>
 
         {activeTest ? (
@@ -149,7 +162,6 @@ export default function ExamArenaPage() {
             )}
 
             <div className="grid lg:grid-cols-12 gap-5">
-              {/* Active Question or Full Review */}
               <div className="lg:col-span-8 space-y-4">
                 {result ? (
                   questions.map((q, idx) => (
@@ -232,7 +244,6 @@ export default function ExamArenaPage() {
                 )}
               </div>
 
-              {/* Question Navigation Palette */}
               <div className="lg:col-span-4 journal-card p-5 h-fit space-y-3">
                 <h3 className="font-hand text-2xl font-bold">Question Palette</h3>
                 <div className="grid grid-cols-5 gap-2">
@@ -246,72 +257,124 @@ export default function ExamArenaPage() {
                         type="button"
                         onClick={() => setCurrentIdx(idx)}
                         className={`h-9 rounded text-xs font-bold border ${
-                          isCurr
-                            ? "ring-2 ring-terracotta border-ink"
-                            : "border-ink/25"
-                        } ${
-                          isMarked
-                            ? "bg-mustard text-ink"
-                            : isAns
-                            ? "bg-forest text-ivory"
-                            : "bg-ivory text-ink"
-                        }`}
+                          isCurr ? "ring-2 ring-terracotta border-ink" : "border-ink/25"
+                        } ${isMarked ? "bg-mustard text-ink" : isAns ? "bg-forest text-ivory" : "bg-ivory text-ink"}`}
                       >
                         {idx + 1}
                       </button>
                     );
                   })}
                 </div>
-                <div className="flex flex-wrap gap-3 text-[11px] text-ink-muted pt-2 border-t border-ink/15">
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-forest inline-block" /> Answered</span>
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-mustard inline-block" /> Marked</span>
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-ivory border border-ink/30 inline-block" /> Unvisited</span>
-                </div>
               </div>
             </div>
           </div>
         ) : (
-          <div className="grid lg:grid-cols-12 gap-5">
-            <div className="lg:col-span-7 space-y-4">
-              {tests.map((t) => (
-                <div key={t.id} className="journal-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h2 className="font-hand text-2xl font-bold">{t.title}</h2>
-                    <p className="text-xs text-ink-muted mt-1">{t.description}</p>
-                    <p className="text-xs font-semibold mt-2">
-                      Duration: {t.duration_minutes} mins • Max Marks: {t.total_marks}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => startTest(t.id)}
-                    className="terracotta-btn px-4 py-2.5 rounded text-xs font-semibold inline-flex items-center gap-1.5 shrink-0"
-                  >
-                    <Play className="w-3.5 h-3.5" /> Start Test
-                  </button>
-                </div>
-              ))}
+          <div className="space-y-5">
+            {/* Filters */}
+            <div className="journal-card p-3.5 flex flex-wrap items-center gap-3">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="px-3 py-1.5 rounded bg-ivory border border-ink/25 text-xs font-medium"
+              >
+                <option value="all">All Categories (520 Tests)</option>
+                <option value="Full Syllabus">Full Syllabus (50)</option>
+                <option value="Unit Sprint">Unit Sprint</option>
+                <option value="JRF Challenge">JRF Challenge</option>
+                <option value="GATE / Placement">GATE / Placement</option>
+              </select>
+
+              <select
+                value={kingdomFilter}
+                onChange={(e) => setKingdomFilter(e.target.value)}
+                className="px-3 py-1.5 rounded bg-ivory border border-ink/25 text-xs font-medium"
+              >
+                <option value="all">All 10 Units</option>
+                {KINGDOMS.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    Unit {k.order_index}: {k.title}
+                  </option>
+                ))}
+              </select>
+
+              <div className="ml-auto flex items-center gap-2 text-xs font-semibold">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => {
+                    const np = page - 1;
+                    setPage(np);
+                    loadList(np);
+                  }}
+                  className="parchment-btn px-2.5 py-1 rounded disabled:opacity-40"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                </button>
+                <span>
+                  Page {page} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={page >= totalPages}
+                  onClick={() => {
+                    const np = page + 1;
+                    setPage(np);
+                    loadList(np);
+                  }}
+                  className="parchment-btn px-2.5 py-1 rounded disabled:opacity-40"
+                >
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
 
-            <div className="lg:col-span-5 journal-card p-5">
-              <h2 className="font-hand text-2xl font-bold mb-3">Past Mock Attempts</h2>
-              {attempts.length === 0 ? (
-                <p className="text-xs text-ink-muted">No mock exams completed yet.</p>
-              ) : (
-                <div className="space-y-2.5">
-                  {attempts.map((a) => (
-                    <div key={a.id} className="p-3 rounded bg-ivory border border-ink/20 text-xs flex justify-between items-center">
-                      <div>
-                        <p className="font-semibold">{a.mock_title}</p>
-                        <p className="text-[11px] text-ink-muted">{new Date(a.completed_at).toLocaleDateString()}</p>
-                      </div>
-                      <span className="font-bold text-forest">
-                        {a.score} / {a.total_marks}
+            <div className="grid lg:grid-cols-12 gap-5">
+              <div className="lg:col-span-8 grid sm:grid-cols-2 gap-3.5">
+                {tests.map((t) => (
+                  <div key={t.id} className="journal-card p-4 flex flex-col justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#F7E9B4] border border-ink/20">
+                        {t.category || "Mock Test"}
                       </span>
+                      <h2 className="font-hand text-2xl font-bold mt-1.5 leading-snug">{t.title}</h2>
+                      <p className="text-xs text-ink-muted mt-1">{t.description}</p>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="flex items-center justify-between pt-2 border-t border-ink/15">
+                      <span className="text-[11px] font-semibold">
+                        {t.duration_minutes}m • {t.total_marks} Marks
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => startTest(t.id)}
+                        className="terracotta-btn px-3 py-1.5 rounded text-xs font-semibold inline-flex items-center gap-1"
+                      >
+                        <Play className="w-3 h-3" /> Start
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="lg:col-span-4 journal-card p-5 h-fit">
+                <h2 className="font-hand text-2xl font-bold mb-3">Recent Attempts</h2>
+                {attempts.length === 0 ? (
+                  <p className="text-xs text-ink-muted">No mock exams completed yet.</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {attempts.map((a) => (
+                      <div key={a.id} className="p-3 rounded bg-ivory border border-ink/20 text-xs flex justify-between items-center">
+                        <div className="min-w-0 pr-2">
+                          <p className="font-semibold truncate">{a.mock_title}</p>
+                          <p className="text-[11px] text-ink-muted">{new Date(a.completed_at).toLocaleDateString()}</p>
+                        </div>
+                        <span className="font-bold text-forest shrink-0">
+                          {a.score} / {a.total_marks}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

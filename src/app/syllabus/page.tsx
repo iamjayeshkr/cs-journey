@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpen, CheckCircle2, Clock, ChevronRight } from "lucide-react";
+import { BookOpen, CheckCircle2, Clock, ChevronRight, Search } from "lucide-react";
 import { JournalShell, UserProfile } from "@/components/JournalShell";
+import { KingdomIllustration } from "@/components/IllustratedAssets";
 
 interface SyllabusKingdom {
   id: string;
@@ -30,6 +31,8 @@ interface SyllabusKingdom {
 export default function SyllabusPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [kingdoms, setKingdoms] = useState<SyllabusKingdom[]>([]);
+  const [activeUnitIdx, setActiveUnitIdx] = useState(0);
+  const [filterQuery, setFilterQuery] = useState("");
   const [coverage, setCoverage] = useState<{
     totals: { units: number; chapters: number; subtopics: number; concepts_authored: number; chapters_covered: number };
     units: Array<{ kingdom_id: string; order_index: number; title: string; chapters_total: number; chapters_with_concepts: number; subtopics_total: number; concepts_authored: number; coverage_pct: number }>;
@@ -41,106 +44,128 @@ export default function SyllabusPage() {
     fetch("/api/coverage").then((r) => r.json()).then((d) => setCoverage(d));
   }, []);
 
+  const activeKingdom = kingdoms[activeUnitIdx];
+  const filteredChapters =
+    activeKingdom?.chapters.filter(
+      (ch) =>
+        !filterQuery.trim() ||
+        ch.title.toLowerCase().includes(filterQuery.toLowerCase()) ||
+        ch.summary.toLowerCase().includes(filterQuery.toLowerCase())
+    ) ?? [];
+
   return (
     <JournalShell user={user}>
       <div className="space-y-6">
-        <div>
-          <h1 className="font-hand text-4xl font-bold">UGC NET CS (Code 087) — Syllabus & Coverage Matrix</h1>
-          <p className="text-sm text-ink-muted mt-1">
-            Official 10-Unit hierarchy. Chapters with authored 4-level lessons are directly playable; remaining official syllabus chapters are tracked honestly below.
-          </p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="font-hand text-4xl font-bold">UGC NET CS (Code 087) — Organized Syllabus</h1>
+            <p className="text-sm text-ink-muted mt-1">
+              Select any unit below to browse its chapters, subtopics, and 8-stage interactive lessons.
+            </p>
+          </div>
+          {coverage && (
+            <div className="flex flex-wrap gap-2 text-xs font-semibold px-3 py-1.5 rounded bg-parchment border border-ink/25">
+              <span>{coverage.totals.units} Units</span>
+              <span>•</span>
+              <span>{coverage.totals.chapters} Chapters</span>
+              <span>•</span>
+              <span>{coverage.totals.subtopics} Subtopics</span>
+              <span>•</span>
+              <span className="text-forest">{coverage.totals.concepts_authored}/90 Authored</span>
+            </div>
+          )}
         </div>
 
-        {/* Live Curriculum Coverage Matrix */}
-        {coverage && (
-          <div className="journal-parchment p-5 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="font-hand text-2xl font-bold">Curriculum Coverage Matrix (Verified)</h2>
-              <div className="flex flex-wrap gap-3 text-xs font-semibold">
-                <span>{coverage.totals.units} Official Units</span>
-                <span>•</span>
-                <span>{coverage.totals.chapters} Official Chapters</span>
-                <span>•</span>
-                <span>{coverage.totals.subtopics} Subtopics</span>
-                <span>•</span>
-                <span className="text-forest">{coverage.totals.concepts_authored} Authored 4-Level Concepts</span>
+        {/* Organized Unit Selector Tabs */}
+        <div className="journal-card p-3 space-y-3">
+          <div className="flex flex-wrap gap-1.5">
+            {kingdoms.map((k, idx) => (
+              <button
+                key={k.id}
+                type="button"
+                onClick={() => setActiveUnitIdx(idx)}
+                className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors ${
+                  activeUnitIdx === idx ? "ink-btn" : "parchment-btn"
+                }`}
+              >
+                Unit {k.order_index}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative max-w-md">
+            <Search className="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={filterQuery}
+              onChange={(e) => setFilterQuery(e.target.value)}
+              placeholder="Filter chapters in this unit..."
+              className="w-full pl-9 pr-3 py-1.5 text-xs rounded bg-ivory border border-ink/25 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        {/* Active Unit Card */}
+        {activeKingdom && (
+          <div className="journal-card p-5 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ink/15 pb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-md bg-parchment/50 border border-ink/20 flex items-center justify-center shrink-0 p-1">
+                  <KingdomIllustration kingdomKey={activeKingdom.id} alt={activeKingdom.title} size={72} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold uppercase text-terracotta">
+                    Unit {activeKingdom.order_index} • {activeKingdom.subtitle}
+                  </span>
+                  <h2 className="font-hand text-3xl font-bold">{activeKingdom.title}</h2>
+                  <p className="text-xs text-ink-muted mt-0.5">{activeKingdom.description}</p>
+                </div>
               </div>
+              <Link href={`/kingdoms/${activeKingdom.slug}`} className="terracotta-btn px-4 py-2 rounded text-xs font-semibold shrink-0">
+                Enter Kingdom →
+              </Link>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
-              {coverage.units.map((u) => (
-                <div key={u.kingdom_id} className="p-2.5 rounded bg-[#FAF4E8] border border-ink/20 text-xs">
-                  <p className="font-bold truncate">Unit {u.order_index}: {u.title}</p>
-                  <p className="text-[11px] text-ink-muted mt-0.5">
-                    {u.chapters_with_concepts}/{u.chapters_total} chapters authored • {u.subtopics_total} subtopics
-                  </p>
-                  <div className="h-1.5 rounded-full bg-parchment mt-1.5 overflow-hidden">
-                    <div className="h-full bg-forest" style={{ width: `${u.coverage_pct}%` }} />
+
+            <div className="grid md:grid-cols-2 gap-4">
+              {filteredChapters.map((ch, cIdx) => (
+                <div key={ch.id} className="p-4 rounded-md bg-ivory border border-ink/20 flex flex-col justify-between gap-3">
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-semibold text-sm flex items-center gap-1.5">
+                        <BookOpen className="w-4 h-4 text-terracotta shrink-0" />
+                        <span>{cIdx + 1}. {ch.title}</span>
+                      </h3>
+                    </div>
+                    <p className="text-xs text-ink-muted mt-1">{ch.summary}</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {ch.concepts.map((c) => (
+                      <Link
+                        key={c.id}
+                        href={`/concepts/${c.slug}`}
+                        className="flex items-center justify-between p-2.5 rounded bg-[#FAF4E8] border border-ink/15 hover:bg-parchment text-xs"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {c.mastery.status === "mastered" ? (
+                            <CheckCircle2 className="w-4 h-4 text-forest shrink-0" />
+                          ) : (
+                            <Clock className="w-4 h-4 text-ink-muted shrink-0" />
+                          )}
+                          <span className="font-semibold truncate">{c.title}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[11px] font-bold text-forest">{c.mastery.mastery_score}%</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </div>
+                      </Link>
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
           </div>
         )}
-
-        <div className="space-y-5">
-          {kingdoms.map((k) => (
-            <div key={k.id} className="journal-card p-5">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink/15 pb-3 mb-4">
-                <div>
-                  <span className="text-xs font-bold uppercase text-terracotta">Unit {k.order_index}</span>
-                  <h2 className="font-hand text-3xl font-bold">{k.title}</h2>
-                  <p className="text-xs text-ink-muted">{k.description}</p>
-                </div>
-                <Link href={`/kingdoms/${k.slug}`} className="parchment-btn px-3.5 py-1.5 rounded text-xs font-semibold">
-                  Open Kingdom →
-                </Link>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                {k.chapters.map((ch) => (
-                  <div key={ch.id} className="p-3.5 rounded-md bg-ivory border border-ink/20">
-                    <h3 className="font-semibold text-sm flex items-center gap-1.5">
-                      <BookOpen className="w-4 h-4 text-terracotta" />
-                      {ch.title}
-                    </h3>
-                    <p className="text-xs text-ink-muted mt-1 mb-3">{ch.summary}</p>
-                    <div className="space-y-1.5">
-                      {ch.concepts.length === 0 ? (
-                        <p className="text-[11px] italic text-ink-muted">Syllabus outline chapter — add concepts in Admin CMS.</p>
-                      ) : (
-                        ch.concepts.map((c) => (
-                          <Link
-                            key={c.id}
-                            href={`/concepts/${c.slug}`}
-                            className="flex items-center justify-between p-2 rounded bg-[#FAF4E8] border border-ink/15 hover:bg-parchment text-xs"
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              {c.mastery.status === "mastered" ? (
-                                <CheckCircle2 className="w-3.5 h-3.5 text-forest shrink-0" />
-                              ) : (
-                                <Clock className="w-3.5 h-3.5 text-ink-muted shrink-0" />
-                              )}
-                              <span className="font-medium truncate">{c.title}</span>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              {c.content_status !== "authored" && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-mustard/30 text-ink">
-                                  Outline
-                                </span>
-                              )}
-                              <span className="text-[11px] font-bold">{c.mastery.mastery_score}%</span>
-                              <ChevronRight className="w-3.5 h-3.5" />
-                            </div>
-                          </Link>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </JournalShell>
   );

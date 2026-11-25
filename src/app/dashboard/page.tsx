@@ -125,11 +125,11 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Animated 2D Journey Trail */}
+        {/* Animated 2D Pet Journey Trail */}
         <JourneyTraveler
           progressPct={data.overall_progress}
-          label="Explorer Progress Trail"
-          characterSrc="/assets/characters/explorer-writing.png"
+          label="Foxy's Treasure Progress Trail"
+          characterSrc="/assets/companions/foxy.png"
         />
 
         {/* 10 Kingdoms Illustrated Cards */}

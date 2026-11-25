@@ -6,8 +6,8 @@ import { Illustration } from "./IllustratedAssets";
 
 export function JourneyTraveler({
   progressPct,
-  label = "Your CS Journey",
-  characterSrc = "/assets/characters/explorer-writing.png",
+  label = "Foxy's Treasure Trail",
+  characterSrc = "/assets/companions/foxy.png",
 }: {
   progressPct: number;
   label?: string;

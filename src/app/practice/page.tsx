@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  Clock,
   Filter,
   Lock,
   Sparkles,
@@ -58,6 +59,12 @@ export default function PracticePage() {
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [animState, setAnimState] = useState<"idle" | "correct" | "wrong">("idle");
   const [loading, setLoading] = useState(true);
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setSeconds((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   async function loadQuestion(targetPage: number) {
     setLoading(true);
@@ -139,8 +146,14 @@ export default function PracticePage() {
               <span className="text-terracotta font-semibold">−10 XP on wrong answer</span>
             </p>
           </div>
-          <div className="px-3 py-1.5 rounded bg-parchment border border-ink/25 text-xs font-bold">
-            Question {page.toLocaleString()} of {total.toLocaleString()}
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1.5 rounded bg-ink text-ivory font-mono text-xs font-bold inline-flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-mustard" />
+              {String(Math.floor(seconds / 60)).padStart(2, "0")}:{String(seconds % 60).padStart(2, "0")}
+            </span>
+            <div className="px-3 py-1.5 rounded bg-parchment border border-ink/25 text-xs font-bold">
+              Question {page.toLocaleString()} of {total.toLocaleString()}
+            </div>
           </div>
         </div>
 
