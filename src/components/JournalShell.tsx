@@ -11,6 +11,7 @@ import {
   Code2,
   Compass,
   Flame,
+  GraduationCap,
   Home,
   Layers,
   LogOut,
@@ -48,6 +49,7 @@ const NAV_GROUPS = [
     label: "Study & Explore",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: Home },
+      { href: "/learn", label: "Learn (Docs)", icon: GraduationCap },
       { href: "/world-map", label: "World Map", icon: MapIcon },
       { href: "/syllabus", label: "Syllabus (90)", icon: BookOpen },
     ],
