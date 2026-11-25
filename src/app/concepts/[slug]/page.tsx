@@ -414,7 +414,7 @@ function ConceptPageInner() {
                     )}
 
                     {data.lesson.teaching_methods && (
-                      <TeachingMethodsPanel methods={data.lesson.teaching_methods} />
+                      <TeachingMethodsPanel methods={data.lesson.teaching_methods} conceptTitle={data.concept.title} />
                     )}
 
                     <div className="flex justify-end gap-2">

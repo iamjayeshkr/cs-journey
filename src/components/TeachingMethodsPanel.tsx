@@ -29,12 +29,24 @@ export interface TeachingMethodsData {
   };
 }
 
-export function TeachingMethodsPanel({ methods }: { methods: TeachingMethodsData }) {
+export function TeachingMethodsPanel({
+  methods,
+  conceptTitle = "this concept",
+}: {
+  methods: TeachingMethodsData;
+  conceptTitle?: string;
+}) {
   const [tab, setTab] = useState<"feynman" | "socratic" | "faded" | "predict" | "compare" | "error">("feynman");
 
   // Feynman state
   const [feynmanText, setFeynmanText] = useState("");
-  const [feynmanResult, setFeynmanResult] = useState<string | null>(null);
+  const [feynmanChecking, setFeynmanChecking] = useState(false);
+  const [feynmanResult, setFeynmanResult] = useState<{
+    understood: boolean;
+    feedback: string;
+    follow_up?: string;
+    verified_by?: string;
+  } | null>(null);
 
   // Socratic state
   const [socraticIdx, setSocraticIdx] = useState(0);
@@ -54,20 +66,31 @@ export function TeachingMethodsPanel({ methods }: { methods: TeachingMethodsData
 
   if (!methods || Object.keys(methods).length === 0) return null;
 
-  function evaluateFeynman() {
-    const text = feynmanText.toLowerCase();
-    const keywords = methods.feynman_keywords || [];
-    const matched = keywords.filter((k) => text.includes(k.toLowerCase()));
-    const missing = keywords.filter((k) => !text.includes(k.toLowerCase()));
-    if (feynmanText.trim().length < 15) {
-      setFeynmanResult("Write at least a couple of sentences in your own words so we can check your explanation!");
+  async function evaluateFeynman() {
+    if (feynmanText.trim().length < 10) {
+      setFeynmanResult({
+        understood: false,
+        feedback: "Write at least a couple of sentences in your own words so we can verify your understanding!",
+      });
       return;
     }
-    setFeynmanResult(
-      missing.length === 0
-        ? `Strong Feynman explanation! You covered all key ideas (${matched.join(", ")}).`
-        : `Good start! You mentioned: ${matched.length ? matched.join(", ") : "core idea"}. Try also explaining: ${missing.join(", ")}.`
-    );
+    setFeynmanChecking(true);
+    try {
+      const res = await fetch("/api/verify-understanding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          concept_title: conceptTitle,
+          explanation: feynmanText,
+          keywords: methods.feynman_keywords || [],
+        }),
+      });
+      if (res.ok) {
+        setFeynmanResult(await res.json());
+      }
+    } finally {
+      setFeynmanChecking(false);
+    }
   }
 
   return (
@@ -116,10 +139,17 @@ export function TeachingMethodsPanel({ methods }: { methods: TeachingMethodsData
             placeholder="Explain this concept as if teaching a 12-year-old..."
             className="w-full p-2.5 text-xs rounded journal-ruled border border-ink/25"
           />
-          <button type="button" onClick={evaluateFeynman} className="forest-btn px-4 py-1.5 rounded text-xs font-semibold">
-            Check My Explanation
+          <button type="button" disabled={feynmanChecking} onClick={evaluateFeynman} className="forest-btn px-4 py-1.5 rounded text-xs font-semibold">
+            {feynmanChecking ? "Verifying with AI Mentor..." : "Verify My Understanding"}
           </button>
-          {feynmanResult && <p className="text-xs font-semibold text-ink bg-parchment/70 p-2.5 rounded">{feynmanResult}</p>}
+          {feynmanResult && (
+            <div className={`text-xs p-3 rounded border space-y-1 ${feynmanResult.understood ? "bg-forest/15 border-forest" : "bg-parchment/80 border-ink/25"}`}>
+              <p className="font-semibold">{feynmanResult.feedback}</p>
+              {feynmanResult.follow_up && (
+                <p className="text-ink-muted italic">Follow-up: {feynmanResult.follow_up}</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
