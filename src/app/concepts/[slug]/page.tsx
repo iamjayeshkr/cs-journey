@@ -22,6 +22,7 @@ import { JourneyTraveler } from "@/components/JourneyTraveler";
 import { TeachingMethodsData, TeachingMethodsPanel } from "@/components/TeachingMethodsPanel";
 import { ConceptVisualizerCards } from "@/components/ConceptVisualizerCards";
 import { CodeBlock } from "@/components/CodeBlock";
+import { InlineMarkdown, MarkdownText } from "@/components/MarkdownText";
 
 const STAGES = [
   { id: "discover", label: "1. Discover", icon: Compass },
@@ -351,18 +352,15 @@ function ConceptPageInner() {
                           className="object-cover"
                         />
                       </div>
-                      <div className="space-y-2.5">
-                        {data.lesson.discover_story.split("\n\n").map((para, pIdx) => (
-                          <p key={pIdx} className="font-serif text-base leading-relaxed text-ink">
-                            {para}
-                          </p>
-                        ))}
+                      <div className="flex-1 min-w-0">
+                        <MarkdownText content={data.lesson.discover_story} />
                       </div>
                     </div>
 
                     {data.lesson.why_it_matters && (
                       <div className="sticky-note p-3.5 rounded text-xs">
-                        <strong>Takeaway before we begin:</strong> {data.lesson.why_it_matters}
+                        <strong>Takeaway before we begin:</strong>{" "}
+                        <InlineMarkdown text={data.lesson.why_it_matters} />
                       </div>
                     )}
 
@@ -453,7 +451,9 @@ function ConceptPageInner() {
                                 <span className="w-5 h-5 rounded-full bg-parchment border border-ink/25 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
                                   {idx + 1}
                                 </span>
-                                <p className="font-serif text-sm leading-relaxed text-ink">{sent}</p>
+                                <p className="font-serif text-sm leading-relaxed text-ink">
+                                  <InlineMarkdown text={sent} />
+                                </p>
                               </div>
                             ))}
                           </div>
