@@ -30,21 +30,57 @@ interface SyllabusKingdom {
 export default function SyllabusPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [kingdoms, setKingdoms] = useState<SyllabusKingdom[]>([]);
+  const [coverage, setCoverage] = useState<{
+    totals: { units: number; chapters: number; subtopics: number; concepts_authored: number; chapters_covered: number };
+    units: Array<{ kingdom_id: string; order_index: number; title: string; chapters_total: number; chapters_with_concepts: number; subtopics_total: number; concepts_authored: number; coverage_pct: number }>;
+  } | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/me").then((r) => r.json()).then((d) => setUser(d.user ?? null));
     fetch("/api/kingdoms").then((r) => r.json()).then((d) => setKingdoms(d.kingdoms ?? []));
+    fetch("/api/coverage").then((r) => r.json()).then((d) => setCoverage(d));
   }, []);
 
   return (
     <JournalShell user={user}>
       <div className="space-y-6">
         <div>
-          <h1 className="font-hand text-4xl font-bold">UGC NET CS Paper 2 — Syllabus Explorer</h1>
+          <h1 className="font-hand text-4xl font-bold">UGC NET CS (Code 087) — Syllabus & Coverage Matrix</h1>
           <p className="text-sm text-ink-muted mt-1">
-            Complete hierarchy: Kingdom → Chapter → Concept. Concepts marked &ldquo;Needs Verification&rdquo; are syllabus outlines ready for deeper authoring in Admin CMS.
+            Official 10-Unit hierarchy. Chapters with authored 4-level lessons are directly playable; remaining official syllabus chapters are tracked honestly below.
           </p>
         </div>
+
+        {/* Live Curriculum Coverage Matrix */}
+        {coverage && (
+          <div className="journal-parchment p-5 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-hand text-2xl font-bold">Curriculum Coverage Matrix (Verified)</h2>
+              <div className="flex flex-wrap gap-3 text-xs font-semibold">
+                <span>{coverage.totals.units} Official Units</span>
+                <span>•</span>
+                <span>{coverage.totals.chapters} Official Chapters</span>
+                <span>•</span>
+                <span>{coverage.totals.subtopics} Subtopics</span>
+                <span>•</span>
+                <span className="text-forest">{coverage.totals.concepts_authored} Authored 4-Level Concepts</span>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+              {coverage.units.map((u) => (
+                <div key={u.kingdom_id} className="p-2.5 rounded bg-[#FAF4E8] border border-ink/20 text-xs">
+                  <p className="font-bold truncate">Unit {u.order_index}: {u.title}</p>
+                  <p className="text-[11px] text-ink-muted mt-0.5">
+                    {u.chapters_with_concepts}/{u.chapters_total} chapters authored • {u.subtopics_total} subtopics
+                  </p>
+                  <div className="h-1.5 rounded-full bg-parchment mt-1.5 overflow-hidden">
+                    <div className="h-full bg-forest" style={{ width: `${u.coverage_pct}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-5">
           {kingdoms.map((k) => (

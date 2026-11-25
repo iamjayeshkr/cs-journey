@@ -66,6 +66,25 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
+        <div className="journal-parchment p-6 space-y-3">
+          <h2 className="font-hand text-2xl font-bold">Personalized Learning Recommendations</h2>
+          <div className="grid sm:grid-cols-2 gap-3 text-xs">
+            {kingdoms
+              .filter((k) => k.progress_pct < 70)
+              .slice(0, 4)
+              .map((k) => (
+                <div key={k.id} className="p-3 rounded bg-[#FAF4E8] border border-ink/20">
+                  <p className="font-bold text-terracotta">Unit {k.order_index}: {k.title}</p>
+                  <p className="text-ink-muted mt-1">
+                    {k.progress_pct === 0
+                      ? "Start with Level 1 (Absolute Beginner) intuition & visual simulation."
+                      : "Practice worked examples + Memory Vault active recall to lift mastery above 70%."}
+                  </p>
+                </div>
+              ))}
+          </div>
+        </div>
+
         <div className="journal-card p-6">
           <h2 className="font-hand text-2xl font-bold mb-3">Mock Test Performance</h2>
           {mocks.length === 0 ? (

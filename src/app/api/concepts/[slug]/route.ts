@@ -31,6 +31,15 @@ export async function GET(_req: Request, context: { params: Promise<{ slug: stri
     options: optionsStmt.all(String(q.id)),
   }));
 
+  const prereqs = db
+    .prepare(
+      `SELECT c.id, c.slug, c.title
+       FROM prerequisites p
+       JOIN concepts c ON c.id = p.prerequisite_concept_id
+       WHERE p.concept_id = ?`
+    )
+    .all(String(concept.id)) as Array<{ id: string; slug: string; title: string }>;
+
   let mastery = {
     stages_completed: [] as string[],
     mastery_score: 0,
@@ -38,6 +47,7 @@ export async function GET(_req: Request, context: { params: Promise<{ slug: stri
     status: "not_started",
   };
   let isBookmarked = false;
+  let prereqsWithStatus = prereqs.map((p) => ({ ...p, mastered: false }));
 
   if (userId) {
     const m = db
@@ -57,12 +67,20 @@ export async function GET(_req: Request, context: { params: Promise<{ slug: stri
       .prepare("SELECT id FROM bookmarks WHERE user_id = ? AND target_type = 'concept' AND target_id = ?")
       .get(userId, String(concept.id));
     isBookmarked = Boolean(bm);
+
+    prereqsWithStatus = prereqs.map((p) => {
+      const pm = db
+        .prepare("SELECT status FROM concept_mastery WHERE user_id = ? AND concept_id = ?")
+        .get(userId, p.id) as { status: string } | undefined;
+      return { ...p, mastered: pm?.status === "mastered" || pm?.status === "practicing" };
+    });
   }
 
   return NextResponse.json({
     concept,
     chapter,
     kingdom,
+    prerequisites: prereqsWithStatus,
     lesson: lesson
       ? {
           ...lesson,
@@ -70,6 +88,11 @@ export async function GET(_req: Request, context: { params: Promise<{ slug: stri
           properties: JSON.parse(String(lesson.properties_json || "[]")),
           edge_cases: JSON.parse(String(lesson.edge_cases_json || "[]")),
           applications: JSON.parse(String(lesson.applications_json || "[]")),
+          learning_objectives: JSON.parse(String(lesson.learning_objectives_json || "[]")),
+          misconceptions: JSON.parse(String(lesson.misconceptions_json || "[]")),
+          complexity: JSON.parse(String(lesson.complexity_json || "{}")),
+          teaching_methods: JSON.parse(String(lesson.teaching_methods_json || "{}")),
+          flashcards: JSON.parse(String(lesson.flashcards_json || "[]")),
         }
       : null,
     puzzles: puzzles.map((p) => ({

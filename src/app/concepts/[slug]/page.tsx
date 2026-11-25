@@ -19,6 +19,7 @@ import { JournalShell, UserProfile } from "@/components/JournalShell";
 import { ConceptSimulatorRouter } from "@/components/simulators/ConceptSimulators";
 import { Illustration, KingdomIllustration } from "@/components/IllustratedAssets";
 import { JourneyTraveler } from "@/components/JourneyTraveler";
+import { TeachingMethodsData, TeachingMethodsPanel } from "@/components/TeachingMethodsPanel";
 
 const STAGES = [
   { id: "discover", label: "1. Discover", icon: Compass },
@@ -42,10 +43,23 @@ interface ConceptPayload {
   };
   chapter: { title: string; slug: string };
   kingdom: { id: string; title: string; slug: string };
+  prerequisites?: Array<{ id: string; slug: string; title: string; mastered: boolean }>;
   lesson: {
     discover_story: string;
     understand_intuition: string;
     formal_definition: string;
+    learning_objectives?: string[];
+    why_it_matters?: string;
+    level_1_beginner?: string;
+    level_2_foundation?: string;
+    level_3_intermediate?: string;
+    level_4_jrf?: string;
+    misconceptions?: string[];
+    pseudocode?: string;
+    complexity?: { time?: string; space?: string; note?: string };
+    exam_relevance?: string;
+    teaching_methods?: TeachingMethodsData;
+    flashcards?: Array<{ card_type: string; front: string; back: string }>;
     examples: Array<{ title: string; problem: string; walkthrough: string }>;
     properties: string[];
     edge_cases: string[];
@@ -89,6 +103,7 @@ function ConceptPageInner() {
   const [puzzleChoice, setPuzzleChoice] = useState("");
   const [puzzleFeedback, setPuzzleFeedback] = useState<string>("");
   const [noteText, setNoteText] = useState("");
+  const [learningLevel, setLearningLevel] = useState<1 | 2 | 3 | 4>(1);
   const [toast, setToast] = useState("");
 
   async function loadAll() {
@@ -264,6 +279,24 @@ function ConceptPageInner() {
           </div>
         </div>
 
+        {/* Prerequisite Check Banner */}
+        {data.prerequisites && data.prerequisites.some((p) => !p.mastered) && (
+          <div className="p-3.5 rounded-md bg-[#F7E9B4]/75 border border-ink/25 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span>
+              <strong>Recommended Prerequisite:</strong> Build your foundation first before diving deep:
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {data.prerequisites
+                .filter((p) => !p.mastered)
+                .map((p) => (
+                  <Link key={p.id} href={`/concepts/${p.slug}`} className="ink-btn px-3 py-1 rounded font-semibold">
+                    Learn {p.title} →
+                  </Link>
+                ))}
+            </div>
+          </div>
+        )}
+
         {/* Animated 2D Character Stage Trail */}
         <JourneyTraveler
           progressPct={Math.round((completed.length / 8) * 100)}
@@ -314,35 +347,76 @@ function ConceptPageInner() {
 
                 {activeStage === "understand" && (
                   <div className="journal-card p-6 space-y-5">
-                    <h2 className="font-hand text-3xl font-bold">Stage 2: First-Principles Understanding</h2>
-                    <div className="p-4 rounded bg-ivory border border-ink/20">
-                      <h3 className="font-semibold text-sm mb-1">Intuition</h3>
-                      <p className="font-serif text-sm leading-relaxed">{data.lesson.understand_intuition}</p>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <h2 className="font-hand text-3xl font-bold">Stage 2: 4-Level Progressive Understanding</h2>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { lvl: 1 as const, label: "Lv 1: Absolute Beginner" },
+                          { lvl: 2 as const, label: "Lv 2: Foundation" },
+                          { lvl: 3 as const, label: "Lv 3: Intermediate" },
+                          { lvl: 4 as const, label: "Lv 4: Advanced / JRF" },
+                        ].map((b) => (
+                          <button
+                            key={b.lvl}
+                            type="button"
+                            onClick={() => setLearningLevel(b.lvl)}
+                            className={`px-2.5 py-1 rounded text-[11px] font-semibold ${
+                              learningLevel === b.lvl ? "ink-btn" : "parchment-btn"
+                            }`}
+                          >
+                            {b.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <div className="p-4 rounded bg-parchment/60 border border-ink/25">
-                      <h3 className="font-semibold text-sm mb-1">Formal Definition</h3>
-                      <p className="font-mono text-xs leading-relaxed">{data.lesson.formal_definition}</p>
+
+                    {data.lesson.why_it_matters && (
+                      <div className="p-3.5 rounded bg-[#F7E9B4]/50 border border-ink/20 text-xs">
+                        <strong>Why It Matters:</strong> {data.lesson.why_it_matters}
+                      </div>
+                    )}
+
+                    {/* Selected Learning Level Content */}
+                    <div className="p-4 rounded bg-ivory border-2 border-ink/25 space-y-2">
+                      <span className="text-[11px] uppercase font-bold text-terracotta">
+                        {learningLevel === 1
+                          ? "Level 1 — Absolute Beginner (Zero Jargon)"
+                          : learningLevel === 2
+                          ? "Level 2 — Foundation (Formal Terms & Rules)"
+                          : learningLevel === 3
+                          ? "Level 3 — Intermediate (Algorithms & Analysis)"
+                          : "Level 4 — Advanced / UGC NET JRF Mastery"}
+                      </span>
+                      <p className="font-serif text-sm leading-relaxed">
+                        {learningLevel === 1
+                          ? data.lesson.level_1_beginner || data.lesson.discover_story
+                          : learningLevel === 2
+                          ? data.lesson.level_2_foundation || data.lesson.understand_intuition
+                          : learningLevel === 3
+                          ? data.lesson.level_3_intermediate || data.lesson.formal_definition
+                          : data.lesson.level_4_jrf || data.lesson.formal_definition}
+                      </p>
                     </div>
-                    <div className="grid md:grid-cols-2 gap-4">
+
+                    {data.lesson.pseudocode && (
+                      <div className="p-4 rounded bg-[#2B2118] text-[#F5EBD8] font-mono text-xs whitespace-pre-wrap">
+                        {data.lesson.pseudocode}
+                      </div>
+                    )}
+
+                    {data.lesson.learning_objectives && data.lesson.learning_objectives.length > 0 && (
                       <div className="p-4 rounded bg-ivory border border-ink/20">
-                        <h3 className="font-semibold text-sm mb-2">Important Properties</h3>
+                        <h3 className="font-semibold text-sm mb-2">Learning Objectives</h3>
                         <ul className="list-disc pl-4 space-y-1 text-xs text-ink-muted">
-                          {data.lesson.properties.map((p, i) => <li key={i}>{p}</li>)}
+                          {data.lesson.learning_objectives.map((obj, i) => <li key={i}>{obj}</li>)}
                         </ul>
                       </div>
-                      <div className="p-4 rounded bg-ivory border border-ink/20">
-                        <h3 className="font-semibold text-sm mb-2">Common Mistakes & Edge Cases</h3>
-                        <ul className="list-disc pl-4 space-y-1 text-xs text-ink-muted">
-                          {data.lesson.edge_cases.map((e, i) => <li key={i}>{e}</li>)}
-                        </ul>
-                      </div>
-                    </div>
-                    <div className="p-4 rounded bg-ivory border border-ink/20">
-                      <h3 className="font-semibold text-sm mb-2">Real-World Applications</h3>
-                      <ul className="list-disc pl-4 space-y-1 text-xs text-ink-muted">
-                        {data.lesson.applications.map((a, i) => <li key={i}>{a}</li>)}
-                      </ul>
-                    </div>
+                    )}
+
+                    {data.lesson.teaching_methods && (
+                      <TeachingMethodsPanel methods={data.lesson.teaching_methods} />
+                    )}
+
                     <div className="flex justify-end gap-2">
                       <button type="button" onClick={() => completeStage("understand")} className="forest-btn px-4 py-2 rounded text-xs font-semibold">
                         Stamp Understand ✓

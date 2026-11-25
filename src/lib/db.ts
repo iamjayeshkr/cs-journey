@@ -13,6 +13,8 @@ import {
   QUESTIONS,
   QUESTS,
 } from "./curriculum-data";
+import { RICH_CONCEPTS_PART1 } from "./unit-concepts-seed";
+import { RICH_CONCEPTS_PART2 } from "./unit-concepts-more";
 
 let _db: DatabaseSync | null = null;
 let _initialized = false;
@@ -36,8 +38,10 @@ export function getDb(): DatabaseSync {
   }
   if (!_initialized) {
     initSchema(_db);
+    migrateLessonsColumns(_db);
     seedIfEmpty(_db);
     syncOfficialSyllabus(_db);
+    syncRichConcepts(_db);
     _initialized = true;
   }
   return _db;
@@ -310,6 +314,108 @@ function initSchema(db: DatabaseSync) {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+}
+
+function migrateLessonsColumns(db: DatabaseSync) {
+  const cols = db.prepare("PRAGMA table_info(lessons)").all() as Array<{ name: string }>;
+  const existing = new Set(cols.map((c) => c.name));
+  const additions: [string, string][] = [
+    ["learning_objectives_json", "TEXT NOT NULL DEFAULT '[]'"],
+    ["why_it_matters", "TEXT NOT NULL DEFAULT ''"],
+    ["level_1_beginner", "TEXT NOT NULL DEFAULT ''"],
+    ["level_2_foundation", "TEXT NOT NULL DEFAULT ''"],
+    ["level_3_intermediate", "TEXT NOT NULL DEFAULT ''"],
+    ["level_4_jrf", "TEXT NOT NULL DEFAULT ''"],
+    ["misconceptions_json", "TEXT NOT NULL DEFAULT '[]'"],
+    ["pseudocode", "TEXT NOT NULL DEFAULT ''"],
+    ["complexity_json", "TEXT NOT NULL DEFAULT '{}'"],
+    ["exam_relevance", "TEXT NOT NULL DEFAULT ''"],
+    ["teaching_methods_json", "TEXT NOT NULL DEFAULT '{}'"],
+    ["flashcards_json", "TEXT NOT NULL DEFAULT '[]'"],
+  ];
+  for (const [col, def] of additions) {
+    if (!existing.has(col)) {
+      db.exec(`ALTER TABLE lessons ADD COLUMN ${col} ${def};`);
+    }
+  }
+}
+
+function syncRichConcepts(db: DatabaseSync) {
+  const allRich = [...RICH_CONCEPTS_PART1, ...RICH_CONCEPTS_PART2];
+  const upsertConcept = db.prepare(`
+    INSERT INTO concepts (id, chapter_id, topic_id, order_index, slug, title, difficulty, simulator_type, content_status, estimated_minutes, xp_reward)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'authored', ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      chapter_id = excluded.chapter_id,
+      topic_id = excluded.topic_id,
+      slug = excluded.slug,
+      title = excluded.title,
+      difficulty = excluded.difficulty,
+      simulator_type = excluded.simulator_type,
+      content_status = 'authored',
+      estimated_minutes = excluded.estimated_minutes,
+      xp_reward = excluded.xp_reward
+  `);
+  const upsertPrereq = db.prepare(`INSERT OR IGNORE INTO prerequisites (concept_id, prerequisite_concept_id) VALUES (?, ?)`);
+  const upsertLesson = db.prepare(`
+    INSERT INTO lessons (
+      id, concept_id, discover_story, understand_intuition, formal_definition, revision_summary,
+      learning_objectives_json, why_it_matters, level_1_beginner, level_2_foundation, level_3_intermediate, level_4_jrf,
+      misconceptions_json, pseudocode, complexity_json, exam_relevance, teaching_methods_json, flashcards_json
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(concept_id) DO UPDATE SET
+      learning_objectives_json = excluded.learning_objectives_json,
+      why_it_matters = excluded.why_it_matters,
+      level_1_beginner = excluded.level_1_beginner,
+      level_2_foundation = excluded.level_2_foundation,
+      level_3_intermediate = excluded.level_3_intermediate,
+      level_4_jrf = excluded.level_4_jrf,
+      misconceptions_json = excluded.misconceptions_json,
+      pseudocode = excluded.pseudocode,
+      complexity_json = excluded.complexity_json,
+      exam_relevance = excluded.exam_relevance,
+      teaching_methods_json = excluded.teaching_methods_json,
+      flashcards_json = excluded.flashcards_json
+  `);
+
+  for (const rc of allRich) {
+    upsertConcept.run(
+      rc.id,
+      rc.chapter_id,
+      rc.topic_id,
+      rc.order_index,
+      rc.slug,
+      rc.title,
+      rc.difficulty,
+      rc.simulator_type,
+      rc.estimated_minutes,
+      rc.xp_reward
+    );
+    for (const pre of rc.prerequisites) {
+      upsertPrereq.run(rc.id, pre);
+    }
+    upsertLesson.run(
+      `les-${rc.id}`,
+      rc.id,
+      rc.level_1_beginner,
+      rc.level_2_foundation,
+      rc.level_3_intermediate,
+      rc.why_it_matters,
+      JSON.stringify(rc.learning_objectives),
+      rc.why_it_matters,
+      rc.level_1_beginner,
+      rc.level_2_foundation,
+      rc.level_3_intermediate,
+      rc.level_4_jrf,
+      JSON.stringify(rc.misconceptions),
+      rc.pseudocode,
+      JSON.stringify(rc.complexity),
+      rc.exam_relevance,
+      JSON.stringify(rc.teaching_methods),
+      JSON.stringify(rc.flashcards)
+    );
+  }
 }
 
 function syncOfficialSyllabus(db: DatabaseSync) {
