@@ -20,6 +20,7 @@ import { ConceptSimulatorRouter } from "@/components/simulators/ConceptSimulator
 import { Illustration, KingdomIllustration } from "@/components/IllustratedAssets";
 import { JourneyTraveler } from "@/components/JourneyTraveler";
 import { TeachingMethodsData, TeachingMethodsPanel } from "@/components/TeachingMethodsPanel";
+import { ConceptVisualizerCards } from "@/components/ConceptVisualizerCards";
 
 const STAGES = [
   { id: "discover", label: "1. Discover", icon: Compass },
@@ -481,29 +482,8 @@ function ConceptPageInner() {
 
                 {activeStage === "visualize" && (
                   <div className="journal-card p-6 space-y-4">
-                    <h2 className="font-hand text-3xl font-bold">Stage 3: Hand-Drawn Analogy & Worked Examples</h2>
-                    {data.concept.simulator_type === "linked_list" && (
-                      <div className="p-3 rounded bg-[#F2E6CF] border border-ink/20 flex justify-center">
-                        <Illustration
-                          src="/assets/educational/railway-analogy-board.png"
-                          alt="The Railway Analogy"
-                          width={340}
-                          height={220}
-                          className="rounded border border-ink/20"
-                        />
-                      </div>
-                    )}
-                    <div className="space-y-3">
-                      {data.lesson.examples.map((ex, i) => (
-                        <div key={i} className="p-4 rounded bg-ivory border border-ink/20">
-                          <h3 className="font-semibold text-sm">{ex.title}</h3>
-                          <p className="text-xs text-terracotta font-medium mt-1">{ex.problem}</p>
-                          <pre className="mt-2 p-3 rounded bg-[#F2E6CF] font-mono text-xs whitespace-pre-wrap">
-                            {ex.walkthrough}
-                          </pre>
-                        </div>
-                      ))}
-                    </div>
+                    <h2 className="font-hand text-3xl font-bold">Stage 3: Interactive Diagrams & Visual Walkthroughs</h2>
+                    <ConceptVisualizerCards slug={data.concept.slug} examples={data.lesson.examples || []} />
                     <div className="flex justify-end gap-2">
                       <button type="button" onClick={() => completeStage("visualize")} className="forest-btn px-4 py-2 rounded text-xs font-semibold">
                         Stamp Visualize ✓
