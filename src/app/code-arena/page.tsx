@@ -440,41 +440,6 @@ export default function CodeArenaPage() {
                     </div>
                   )}
                 </div>
-
-                {/* Execution Output Panel */}
-                <div className="rounded-lg border border-ink/25 bg-[#F2E6CF] overflow-hidden">
-                  <div className="px-3.5 py-2 border-b border-ink/15 flex items-center justify-between bg-[#EAD9BA]/75">
-                    <span className="text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-1.5">
-                      <Terminal className="w-3.5 h-3.5 text-terracotta" /> Execution Output
-                    </span>
-                    {submittedMsg && (
-                      <span className="text-[11px] font-bold text-forest">{submittedMsg}</span>
-                    )}
-                  </div>
-                  <div className="p-3 space-y-2 min-h-[72px] font-mono text-xs">
-                    {!error && output.length === 0 && (
-                      <p className="text-ink-muted">&gt; Click &ldquo;Run &amp; Verify&rdquo; to test your code...</p>
-                    )}
-                    {error && (
-                      <p className="text-terracotta bg-terracotta/10 p-2 rounded border border-terracotta/30">
-                        {error}
-                      </p>
-                    )}
-                    {output.map((o, i) => (
-                      <div
-                        key={i}
-                        className={`p-2 rounded border ${
-                          o.passed
-                            ? "bg-forest/15 border-forest text-ink"
-                            : "bg-terracotta/15 border-terracotta text-ink"
-                        }`}
-                      >
-                        {o.passed ? "✓ PASS — " : "✗ FAIL — "}
-                        {o.detail}
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
 
               {/* RIGHT PANE: Real Monaco Code Editor */}
@@ -600,6 +565,41 @@ export default function CodeArenaPage() {
                     >
                       <Send className="w-3.5 h-3.5" /> Submit
                     </button>
+                  </div>
+                </div>
+
+                {/* Execution Output Panel (bottom of code panel) */}
+                <div className="rounded-lg border border-ink/25 bg-[#F2E6CF] overflow-hidden">
+                  <div className="px-3.5 py-2 border-b border-ink/15 flex items-center justify-between bg-[#EAD9BA]/75">
+                    <span className="text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-1.5">
+                      <Terminal className="w-3.5 h-3.5 text-terracotta" /> Execution Output
+                    </span>
+                    {submittedMsg && (
+                      <span className="text-[11px] font-bold text-forest">{submittedMsg}</span>
+                    )}
+                  </div>
+                  <div className="p-3 space-y-2 min-h-[84px] font-mono text-xs">
+                    {!error && output.length === 0 && (
+                      <p className="text-ink-muted">&gt; Click &ldquo;Run &amp; Verify&rdquo; to test your code...</p>
+                    )}
+                    {error && (
+                      <p className="text-terracotta bg-terracotta/10 p-2 rounded border border-terracotta/30">
+                        {error}
+                      </p>
+                    )}
+                    {output.map((o, i) => (
+                      <div
+                        key={i}
+                        className={`p-2 rounded border ${
+                          o.passed
+                            ? "bg-forest/15 border-forest text-ink"
+                            : "bg-terracotta/15 border-terracotta text-ink"
+                        }`}
+                      >
+                        {o.passed ? "✓ PASS — " : "✗ FAIL — "}
+                        {o.detail}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
