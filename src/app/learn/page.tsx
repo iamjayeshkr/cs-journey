@@ -7,17 +7,20 @@ import {
   ArrowLeft,
   BookOpen,
   CheckCircle2,
+  Compass,
+  FlaskConical,
   GraduationCap,
   Languages,
   Layers,
-  Lightbulb,
+  ListChecks,
   Search,
   Sparkles,
   Swords,
 } from "lucide-react";
 import { JournalShell, UserProfile } from "@/components/JournalShell";
 import { KingdomIllustration } from "@/components/IllustratedAssets";
-import { getTopicDoc, LearnLang, VisualKind } from "@/lib/learn-docs";
+import { resolveDiagramDomain, TextbookDiagram } from "@/components/TextbookDiagrams";
+import { getTextbookChapter, LearnLang } from "@/lib/learn-docs";
 
 interface ConceptSummary {
   id: string;
@@ -45,182 +48,54 @@ interface KingdomItem {
   chapters: ChapterWithConcepts[];
 }
 
-function InteractiveDocVisual({
-  kind,
-  lang,
-}: {
-  kind: VisualKind;
-  lang: LearnLang;
-}) {
-  const [pVal, setPVal] = useState(true);
-  const [qVal, setQVal] = useState(false);
-  const [step, setStep] = useState(0);
-
-  if (kind === "logic_gate") {
-    const implies = !pVal || qVal;
-    const andVal = pVal && qVal;
-    const orVal = pVal || qVal;
-    return (
-      <div className="p-4 rounded-xl bg-ivory border border-ink/20 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-xs font-bold text-ink">
-            {lang === "hinglish"
-              ? "Buttons dabao aur Truth Values live dekho:"
-              : "Toggle P and Q to see Logic Outputs live:"}
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setPVal((v) => !v)}
-              className={`px-3 py-1 rounded text-xs font-mono font-bold border ${
-                pVal ? "bg-forest text-ivory border-forest" : "bg-terracotta/20 text-terracotta border-terracotta"
-              }`}
-            >
-              P = {pVal ? "TRUE" : "FALSE"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setQVal((v) => !v)}
-              className={`px-3 py-1 rounded text-xs font-mono font-bold border ${
-                qVal ? "bg-forest text-ivory border-forest" : "bg-terracotta/20 text-terracotta border-terracotta"
-              }`}
-            >
-              Q = {qVal ? "TRUE" : "FALSE"}
-            </button>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-2 text-center text-xs">
-          <div className="p-2.5 rounded bg-parchment/70 border border-ink/15">
-            <p className="font-mono font-bold">P → Q</p>
-            <p className={`font-bold mt-1 ${implies ? "text-forest" : "text-terracotta"}`}>
-              {implies ? "TRUE" : "FALSE (Broken!)"}
-            </p>
-          </div>
-          <div className="p-2.5 rounded bg-parchment/70 border border-ink/15">
-            <p className="font-mono font-bold">P ∧ Q (AND)</p>
-            <p className={`font-bold mt-1 ${andVal ? "text-forest" : "text-ink-muted"}`}>
-              {andVal ? "TRUE" : "FALSE"}
-            </p>
-          </div>
-          <div className="p-2.5 rounded bg-parchment/70 border border-ink/15">
-            <p className="font-mono font-bold">P ∨ Q (OR)</p>
-            <p className={`font-bold mt-1 ${orVal ? "text-forest" : "text-ink-muted"}`}>
-              {orVal ? "TRUE" : "FALSE"}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const stagesByKind: Record<string, { label: string; descEn: string; descHi: string }[]> = {
-    pipeline: [
-      { label: "IF (Fetch)", descEn: "CPU fetches instruction from Cache/RAM.", descHi: "CPU instruction ko Memory se uthata hai." },
-      { label: "ID (Decode)", descEn: "Control Unit decodes opcode & reads registers.", descHi: "Samajhta hai ki kaunsa operation karna hai." },
-      { label: "EX (Execute)", descEn: "ALU performs arithmetic or branch check.", descHi: "ALU asli calculation karta hai." },
-      { label: "MEM / WB", descEn: "Writes result back to memory or register.", descHi: "Final answer register mein save hota hai." },
-    ],
-    memory_stack: [
-      { label: "main()", descEn: "Bottom stack frame created when program starts.", descHi: "Program start hote hi main() ki plate neeche lagti hai." },
-      { label: "solve(n)", descEn: "Pushed on top with its own local variables.", descHi: "Nayi plate upar aati hai apne local variables ke saath." },
-      { label: "solve(n-1)", descEn: "Recursive call pushes another frame on top.", descHi: "Recursion mein ek aur plate upar chadh jaati hai." },
-      { label: "return", descEn: "Top frame pops off cleanly (LIFO order).", descHi: "Kaam khatam hote hi upar wali plate hat jaati hai." },
-    ],
-    sql_table: [
-      { label: "Raw Table", descEn: "All 4 rows: (Amit, CS, 88), (Riya, CS, 72), (Dev, EC, 91), (Neha, CS, 95)", descHi: "Poori table: 4 students alag-alag branches aur marks ke saath." },
-      { label: "σ (Filter Rows)", descEn: "Keep only dept='CS' AND marks>80 -> Amit (88), Neha (95).", descHi: "σ ne sirf CS ke >80 marks wale rows rakhe: Amit aur Neha." },
-      { label: "π (Pick Columns)", descEn: "Show only Name column -> [Amit, Neha].", descHi: "π ne sirf Name column nikala: [Amit, Neha]." },
-    ],
-    cpu_gantt: [
-      { label: "0–2ms: P2", descEn: "Shortest job P2 (burst 2ms) runs first!", descHi: "Chhota kaam P2 (2ms) sabse pehle nipat gaya!" },
-      { label: "2–10ms: P1", descEn: "Longer job P1 (burst 8ms) runs next; avg wait = 1ms.", descHi: "Ab P1 (8ms) chalta hai; average wait sirf 1ms!" },
-    ],
-    cfg_graph: [
-      { label: "Start Node", descEn: "Program enters the function.", descHi: "Function yahan se shuru hota hai." },
-      { label: "Decision (if/while)", descEn: "Each condition splits flow into True/False branches (+1 to V(G)).", descHi: "Har 'if' ya loop 2 raste banata hai (+1 to V(G))." },
-      { label: "Exit Node", descEn: "Branches merge back; V(G) = Predicates + 1.", descHi: "Sab raste milte hain; V(G) = Decision nodes + 1." },
-    ],
-    tree_heap: [
-      { label: "Root (50)", descEn: "Compare target (35) with 50: 35 < 50, go LEFT!", descHi: "35 ko 50 se compare karo: chhota hai, LEFT jao!" },
-      { label: "Left Child (30)", descEn: "Compare 35 with 30: 35 > 30, go RIGHT!", descHi: "35 > 30 hai, ab RIGHT jao!" },
-      { label: "Found (35)", descEn: "Found in just 3 comparisons instead of scanning all nodes!", descHi: "Sirf 3 steps mein mil gaya — poora tree nahi dekhna pada!" },
-    ],
-    automata: [
-      { label: "q₀ (Start)", descEn: "Waiting for 'a'. Reading 'b' stays at q₀.", descHi: "Start state: 'a' ka wait kar raha hai." },
-      { label: "q₁ (Saw 'a')", descEn: "Saw 'a'! Now reading 'b' moves to Final state.", descHi: "'a' mil gaya! Ab 'b' aate hi jeet jaayenge." },
-      { label: "q₂ (Accept ✅)", descEn: "String ends in 'ab' — Accepted!", descHi: "String 'ab' par khatam hui — Accept ho gayi ✅!" },
-    ],
-    osi_layers: [
-      { label: "7. Application", descEn: "Creates HTTP/WhatsApp data message.", descHi: "Tumhara message yahan banta hai." },
-      { label: "4. Transport (TCP)", descEn: "Adds Port numbers + reliable sequence.", descHi: "Port number aur reliability tag lagta hai." },
-      { label: "3. Network (IP)", descEn: "Adds Source & Destination IP for routing.", descHi: "Destination IP address lagta hai." },
-      { label: "2-1. Link & Physical", descEn: "Adds MAC address & sends bits over wire/Wi-Fi.", descHi: "MAC address lagta hai aur bits wire/Wi-Fi par jaate hain." },
-    ],
-    ai_search: [
-      { label: "Start (g=0, h=7)", descEn: "Total f = 0 + 7 = 7.", descHi: "Shuruwat: g=0, andaaza h=7, total f=7." },
-      { label: "Road A (g=4, h=5)", descEn: "Total f = 9 (looks longer).", descHi: "Rasta A: total f = 9 (thoda lamba lag raha hai)." },
-      { label: "Road B (g=6, h=2)", descEn: "Total f = 8 -> A* picks Road B!", descHi: "Rasta B: total f = 8 -> A* isko chunega!" },
-    ],
-  };
-
-  const stages = stagesByKind[kind] ?? stagesByKind.pipeline;
-  const activeStage = stages[step % stages.length];
-
-  return (
-    <div className="p-4 rounded-xl bg-ivory border border-ink/20 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-xs font-bold text-ink">
-          {lang === "hinglish" ? "Step par click karke flow dekho:" : "Click any stage to trace the flow:"}
-        </span>
-        <button
-          type="button"
-          onClick={() => setStep((s) => (s + 1) % stages.length)}
-          className="parchment-btn px-2.5 py-1 rounded text-[11px] font-semibold"
-        >
-          {lang === "hinglish" ? "Agla Step →" : "Next Step →"}
-        </button>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {stages.map((st, idx) => (
-          <button
-            key={st.label}
-            type="button"
-            onClick={() => setStep(idx)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
-              step % stages.length === idx
-                ? "bg-forest text-ivory border-forest shadow-sm"
-                : "bg-parchment/70 text-ink border-ink/20 hover:bg-parchment"
-            }`}
-          >
-            {idx + 1}. {st.label}
-          </button>
-        ))}
-      </div>
-      <div className="p-3 rounded-lg bg-[#FAF4E8] border border-ink/15 text-xs font-serif text-ink">
-        <strong>{activeStage.label}:</strong>{" "}
-        {lang === "hinglish" ? activeStage.descHi : activeStage.descEn}
-      </div>
-    </div>
-  );
+interface RevisionTopicMeta {
+  concept_id: string;
+  revision_summary: string;
+  formal_definition: string;
 }
+
+type DocTab = "notes" | "illustrations" | "examples" | "practice" | "flashcards" | "more";
+
+const DOC_TABS: { id: DocTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: "notes", label: "Notes", icon: BookOpen },
+  { id: "illustrations", label: "Illustrations", icon: Compass },
+  { id: "examples", label: "Examples", icon: FlaskConical },
+  { id: "practice", label: "Practice", icon: Swords },
+  { id: "flashcards", label: "Flashcards", icon: Layers },
+  { id: "more", label: "More", icon: ListChecks },
+];
 
 export default function LearnDocsPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [kingdoms, setKingdoms] = useState<KingdomItem[]>([]);
+  const [metaMap, setMetaMap] = useState<Record<string, RevisionTopicMeta>>({});
   const [selectedUnitSlug, setSelectedUnitSlug] = useState<string | null>(null);
   const [selectedConceptSlug, setSelectedConceptSlug] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<DocTab>("notes");
   const [lang, setLang] = useState<LearnLang>("en");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [selectedPracticeOption, setSelectedPracticeOption] = useState<number | null>(null);
+  const [flippedCardIdx, setFlippedCardIdx] = useState<number | null>(null);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/auth/me").then((r) => r.json()),
       fetch("/api/kingdoms").then((r) => r.json()),
+      fetch("/api/revisions").then((r) => r.json()),
     ])
-      .then(([me, kRes]) => {
+      .then(([me, kRes, revRes]) => {
         setUser(me.user ?? null);
         setKingdoms(kRes.kingdoms ?? []);
+        const map: Record<string, RevisionTopicMeta> = {};
+        for (const fc of revRes.flashcards ?? []) {
+          map[fc.concept_id] = {
+            concept_id: fc.concept_id,
+            revision_summary: fc.revision_summary,
+            formal_definition: fc.formal_definition,
+          };
+        }
+        setMetaMap(map);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -262,30 +137,34 @@ export default function LearnDocsPage() {
     return matches.slice(0, 18);
   }, [kingdoms, search]);
 
-  const doc = useMemo(() => {
+  const chapter = useMemo(() => {
     if (!activeUnit || !activeTopic) return null;
-    return getTopicDoc(activeUnit.title, activeTopic.title);
-  }, [activeUnit, activeTopic]);
+    const meta = metaMap[activeTopic.id];
+    return getTextbookChapter(
+      activeUnit.title,
+      activeTopic.title,
+      lang,
+      meta?.revision_summary,
+      meta?.formal_definition
+    );
+  }, [activeUnit, activeTopic, lang, metaMap]);
 
-  const copy = doc ? (lang === "hinglish" ? doc.hinglish : doc.en) : null;
+  const diagramDomain = activeUnit ? resolveDiagramDomain(activeUnit.title) : "dsa";
 
   return (
     <JournalShell user={user}>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Top Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="font-hand text-4xl font-bold flex items-center gap-2 text-ink">
-              <GraduationCap className="w-8 h-8 text-terracotta" /> Learn — Concept Docs (10 Units • 90 Topics)
+              <GraduationCap className="w-8 h-8 text-terracotta" /> Learn — CS Textbook &amp; Docs
             </h1>
-            <p className="text-sm text-ink-muted">
-              Learn any concept from zero before practicing — explained in{" "}
-              <strong className="text-ink">Easy English</strong> &amp;{" "}
-              <strong className="text-ink">Hinglish</strong> with interactive visuals.
+            <p className="text-xs sm:text-sm text-ink-muted">
+              Structured Computer Science textbook across all 10 units and 90 official topics — with precision diagrams, derivations, and solved examples.
             </p>
           </div>
 
-          {/* Language Toggle */}
           <div className="flex items-center gap-1.5 bg-ivory border border-ink/25 rounded-full p-1 shadow-sm">
             <Languages className="w-4 h-4 text-terracotta ml-2" />
             <button
@@ -295,7 +174,7 @@ export default function LearnDocsPage() {
                 lang === "en" ? "bg-ink text-ivory" : "text-ink-muted hover:text-ink"
               }`}
             >
-              Easy English
+              Textbook English
             </button>
             <button
               type="button"
@@ -304,50 +183,53 @@ export default function LearnDocsPage() {
                 lang === "hinglish" ? "bg-terracotta text-ivory" : "text-ink-muted hover:text-ink"
               }`}
             >
-              Hinglish (Aasan)
+              Hinglish
             </button>
           </div>
         </div>
 
         {/* Search Across All 90 Topics */}
-        <div className="journal-card p-3 space-y-2">
-          <div className="relative">
-            <Search className="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search any of the 90 CS topics (e.g., Normalization, Paging, Deadlock, Master Theorem, DFA)..."
-              className="w-full pl-9 pr-3 py-2 text-xs rounded bg-ivory border border-ink/20 focus:outline-none focus:border-terracotta"
-            />
-          </div>
-          {allTopicsMatchingSearch.length > 0 && (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
-              {allTopicsMatchingSearch.map(({ unit, topic }) => (
-                <button
-                  key={topic.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedUnitSlug(unit.slug);
-                    setSelectedConceptSlug(topic.slug);
-                    setSearch("");
-                  }}
-                  className="text-left p-2.5 rounded bg-ivory border border-ink/20 hover:bg-parchment transition text-xs"
-                >
-                  <p className="font-bold text-ink truncate">{topic.title}</p>
-                  <p className="text-[10px] text-ink-muted truncate">{unit.title}</p>
-                </button>
-              ))}
+        {!activeUnit && (
+          <div className="journal-card p-3 space-y-2">
+            <div className="relative">
+              <Search className="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search any of the 90 CS topics (e.g., Normalization, Paging, Deadlock, Master Theorem, DFA)..."
+                className="w-full pl-9 pr-3 py-2 text-xs rounded bg-ivory border border-ink/20 focus:outline-none focus:border-terracotta"
+              />
             </div>
-          )}
-        </div>
+            {allTopicsMatchingSearch.length > 0 && (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
+                {allTopicsMatchingSearch.map(({ unit, topic }) => (
+                  <button
+                    key={topic.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedUnitSlug(unit.slug);
+                      setSelectedConceptSlug(topic.slug);
+                      setActiveTab("notes");
+                      setSearch("");
+                    }}
+                    className="text-left p-2.5 rounded bg-ivory border border-ink/20 hover:bg-parchment transition text-xs"
+                  >
+                    <p className="font-bold text-ink truncate">{topic.title}</p>
+                    <p className="text-[10px] text-ink-muted truncate">{unit.title}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {loading ? (
           <div className="journal-card p-8 text-center text-sm text-ink-muted">
-            Loading 10 units and 90 concept docs...
+            Loading 10 units and 90 textbook chapters...
           </div>
         ) : !activeUnit ? (
-          /* VIEW 1: 10 UNIT CARDS */
+          /* VIEW 1: ALL 10 UNIT MODULES */
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {kingdoms.map((unit) => {
               const topicCount = unit.chapters.reduce((acc, ch) => acc + ch.concepts.length, 0);
@@ -359,6 +241,9 @@ export default function LearnDocsPage() {
                     setSelectedUnitSlug(unit.slug);
                     const first = unit.chapters[0]?.concepts[0];
                     if (first) setSelectedConceptSlug(first.slug);
+                    setActiveTab("notes");
+                    setSelectedPracticeOption(null);
+                    setFlippedCardIdx(null);
                   }}
                   className="journal-card p-5 text-left hover:-translate-y-1 transition-all flex flex-col justify-between gap-4 group"
                 >
@@ -376,18 +261,17 @@ export default function LearnDocsPage() {
                       <p className="text-xs text-ink-muted mt-1 line-clamp-2">{unit.subtitle}</p>
                     </div>
                   </div>
-
                   <div className="flex items-center justify-between pt-2 border-t border-ink/10 text-xs font-semibold">
-                    <span className="text-ink-muted">Easy English + Hinglish + Visuals</span>
-                    <span className="text-forest">Open Docs →</span>
+                    <span className="text-ink-muted">Textbook • Diagrams • Examples</span>
+                    <span className="text-forest">Open Unit →</span>
                   </div>
                 </button>
               );
             })}
           </div>
         ) : (
-          /* VIEW 2: INSIDE SELECTED UNIT -> 9 TOPICS + FULL INTERACTIVE DOCS */
-          <div className="space-y-4">
+          /* VIEW 2: STILL-SCREEN SPLIT-PANE TEXTBOOK READER (Only inner panes scroll) */
+          <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <button
                 type="button"
@@ -404,13 +288,13 @@ export default function LearnDocsPage() {
               </span>
             </div>
 
-            <div className="grid lg:grid-cols-12 gap-5 items-start">
-              {/* Sub-topic Sidebar (9 topics in this unit) */}
-              <div className="lg:col-span-4 journal-card p-4 space-y-2">
-                <h3 className="font-hand text-2xl font-bold text-ink px-1">
+            <div className="grid lg:grid-cols-12 gap-4 lg:h-[calc(100vh-14.5rem)]">
+              {/* LEFT PANE: Fixed Numbered Topic List (01 .. 09) */}
+              <div className="lg:col-span-4 journal-card p-4 flex flex-col overflow-hidden">
+                <h3 className="font-hand text-2xl font-bold text-ink px-1 pb-2 border-b border-ink/15 shrink-0">
                   Unit {activeUnit.order_index} Topics ({unitTopics.length})
                 </h3>
-                <div className="space-y-1.5">
+                <div className="flex-1 overflow-y-auto space-y-1.5 pt-2 pr-1">
                   {unitTopics.map((topic, idx) => {
                     const isSelected = activeTopic?.id === topic.id;
                     const done = (topic.mastery?.mastery_score ?? 0) >= 80;
@@ -418,7 +302,11 @@ export default function LearnDocsPage() {
                       <button
                         key={topic.id}
                         type="button"
-                        onClick={() => setSelectedConceptSlug(topic.slug)}
+                        onClick={() => {
+                          setSelectedConceptSlug(topic.slug);
+                          setSelectedPracticeOption(null);
+                          setFlippedCardIdx(null);
+                        }}
                         className={`w-full text-left px-3 py-2.5 rounded-lg border text-xs transition flex items-center justify-between gap-2 ${
                           isSelected
                             ? "bg-[#FFF3D1] border-terracotta text-ink font-bold shadow-sm"
@@ -426,7 +314,10 @@ export default function LearnDocsPage() {
                         }`}
                       >
                         <span className="truncate">
-                          {idx + 1}. {topic.title}
+                          <span className="font-mono text-ink-muted mr-1.5">
+                            {String(idx + 1).padStart(2, "0")}.
+                          </span>
+                          {topic.title}
                         </span>
                         {done && <CheckCircle2 className="w-3.5 h-3.5 text-forest shrink-0" />}
                       </button>
@@ -435,114 +326,324 @@ export default function LearnDocsPage() {
                 </div>
               </div>
 
-              {/* Main Concept Doc Reader */}
-              {activeTopic && doc && copy && (
-                <div className="lg:col-span-8 journal-card p-6 space-y-5">
-                  <div className="flex flex-wrap items-start justify-between gap-3 pb-4 border-b border-ink/15">
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-terracotta">
-                        {activeUnit.title} • {lang === "hinglish" ? "Hinglish Guide" : "Easy English Guide"}
-                      </span>
-                      <h2 className="font-hand text-3xl sm:text-4xl font-bold text-ink mt-0.5">
-                        {activeTopic.title}
-                      </h2>
-                      <p className="text-xs text-ink-muted mt-1">{copy.tldr}</p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
+              {/* RIGHT PANE: Independently Scrollable Textbook Reader */}
+              {activeTopic && chapter && (
+                <div className="lg:col-span-8 journal-card flex flex-col overflow-hidden">
+                  {/* Sticky Reader Header + 6 Section Tabs */}
+                  <div className="p-4 sm:p-5 border-b border-ink/15 bg-[#F8EFE0] shrink-0 space-y-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-terracotta">
+                          {activeUnit.title}
+                        </span>
+                        <h2 className="font-hand text-3xl font-bold text-ink leading-tight">
+                          {activeTopic.title}
+                        </h2>
+                      </div>
                       <Link
                         href={`/concepts/${activeTopic.slug}`}
-                        className="terracotta-btn px-3.5 py-2 rounded text-xs font-semibold inline-flex items-center gap-1.5"
+                        className="terracotta-btn px-3 py-1.5 rounded text-xs font-semibold inline-flex items-center gap-1.5 shrink-0"
                       >
-                        <Swords className="w-3.5 h-3.5" /> Practice Topic →
-                      </Link>
-                      <Link
-                        href="/vault"
-                        className="parchment-btn px-3 py-2 rounded text-xs font-semibold inline-flex items-center gap-1.5"
-                      >
-                        <Layers className="w-3.5 h-3.5" /> 520 Flashcards
+                        <Swords className="w-3.5 h-3.5" /> Interactive Stage →
                       </Link>
                     </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {DOC_TABS.map((t) => {
+                        const Icon = t.icon;
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => setActiveTab(t.id)}
+                            className={`px-3 py-1.5 rounded-md text-xs font-semibold inline-flex items-center gap-1.5 transition ${
+                              activeTab === t.id ? "ink-btn" : "parchment-btn"
+                            }`}
+                          >
+                            <Icon className="w-3.5 h-3.5" />
+                            {t.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  {/* Story / Real-Life Intuition */}
-                  <div className="sticky-note p-4 rounded-xl border border-[#D5AE65] space-y-1.5">
-                    <h3 className="font-hand text-2xl font-bold flex items-center gap-1.5 text-ink">
-                      <Lightbulb className="w-5 h-5 text-terracotta" />
-                      {lang === "hinglish" ? "Real-Life Kahani (Asaan Intuition)" : "Real-Life Intuition"}
-                    </h3>
-                    <p className="text-sm font-serif leading-relaxed text-ink">{copy.story}</p>
-                  </div>
+                  {/* Scrollable Textbook Content Body */}
+                  <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
+                    {activeTab === "notes" && (
+                      <>
+                        <section className="space-y-2">
+                          <h3 className="font-serif text-base font-bold text-terracotta uppercase tracking-wider">
+                            1. Introduction &amp; Formal Definition
+                          </h3>
+                          <p className="font-serif text-sm sm:text-base leading-relaxed text-ink">
+                            {chapter.introduction}
+                          </p>
+                          <div className="p-4 rounded-lg bg-ivory border-l-4 border-forest font-serif text-sm leading-relaxed text-ink">
+                            <strong>Formal Definition:</strong> {chapter.definition}
+                          </div>
+                        </section>
 
-                  {/* Interactive Visualization */}
-                  <div className="space-y-2">
-                    <h3 className="font-hand text-2xl font-bold flex items-center gap-1.5 text-ink">
-                      <Sparkles className="w-5 h-5 text-forest" /> {doc.visualTitle}
-                    </h3>
-                    <InteractiveDocVisual kind={doc.visualKind} lang={lang} />
-                  </div>
+                        <section className="space-y-2">
+                          <h3 className="font-serif text-base font-bold text-terracotta uppercase tracking-wider">
+                            2. Fundamental Principles &amp; Working Mechanism
+                          </h3>
+                          <ul className="list-disc pl-5 space-y-1.5 font-serif text-sm text-ink">
+                            {chapter.principles.map((p, i) => (
+                              <li key={i}>{p}</li>
+                            ))}
+                          </ul>
+                          <div className="grid sm:grid-cols-3 gap-3 pt-2">
+                            {chapter.workingMechanism.map((step, i) => (
+                              <div key={i} className="p-3 rounded-lg bg-ivory border border-ink/20 text-xs leading-relaxed">
+                                <span className="font-bold text-forest block mb-1">Phase {i + 1}</span>
+                                {step}
+                              </div>
+                            ))}
+                          </div>
+                        </section>
 
-                  {/* Step-by-Step Breakdown */}
-                  <div className="space-y-2.5">
-                    <h3 className="font-hand text-2xl font-bold flex items-center gap-1.5 text-ink">
-                      <BookOpen className="w-5 h-5 text-terracotta" />
-                      {lang === "hinglish" ? "Step-by-Step Samjho" : "Step-by-Step Breakdown"}
-                    </h3>
-                    <div className="grid sm:grid-cols-3 gap-3">
-                      {copy.steps.map((s) => (
-                        <div key={s.heading} className="p-3.5 rounded-lg bg-ivory border border-ink/20 space-y-1">
-                          <p className="text-xs font-bold text-terracotta">{s.heading}</p>
-                          <p className="text-xs text-ink leading-relaxed">{s.detail}</p>
+                        <section className="space-y-2">
+                          <h3 className="font-serif text-base font-bold text-terracotta uppercase tracking-wider">
+                            3. Important Terminology
+                          </h3>
+                          <div className="grid sm:grid-cols-3 gap-2.5">
+                            {chapter.terminology.map((t) => (
+                              <div key={t.term} className="p-3 rounded-lg bg-[#FAF4E8] border border-ink/15 text-xs space-y-1">
+                                <p className="font-bold text-ink">{t.term}</p>
+                                <p className="text-ink-muted leading-snug">{t.meaning}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+
+                        <section className="space-y-2">
+                          <h3 className="font-serif text-base font-bold text-terracotta uppercase tracking-wider">
+                            4. Mathematical Formulation &amp; Derivation
+                          </h3>
+                          <div className="p-4 rounded-lg bg-ivory border border-ink/20 space-y-3">
+                            <p className="font-mono text-sm font-bold text-ink bg-parchment/70 p-2.5 rounded border border-ink/15">
+                              {chapter.derivation.formula}
+                            </p>
+                            <div className="grid sm:grid-cols-2 gap-2 text-xs">
+                              {chapter.derivation.variables.map((v) => (
+                                <div key={v.sym} className="flex items-start gap-2">
+                                  <code className="px-1.5 py-0.5 rounded bg-parchment font-mono font-bold text-terracotta shrink-0">
+                                    {v.sym}
+                                  </code>
+                                  <span className="text-ink-muted">{v.desc}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <ol className="list-decimal pl-5 space-y-1 text-xs font-serif text-ink">
+                              {chapter.derivation.steps.map((s, i) => (
+                                <li key={i}>{s}</li>
+                              ))}
+                            </ol>
+                            <div className="p-3 rounded bg-forest/10 border border-forest/30 text-xs">
+                              <strong>Worked Numerical:</strong> {chapter.derivation.numericalExample}
+                            </div>
+                            <div className="p-3 rounded bg-terracotta/10 border border-terracotta/30 text-xs">
+                              <strong>Calculation Pitfall:</strong> {chapter.derivation.calculationMistake}
+                            </div>
+                          </div>
+                        </section>
+
+                        <section className="space-y-2">
+                          <h3 className="font-serif text-base font-bold text-terracotta uppercase tracking-wider">
+                            5. Comparison &amp; Examination Points
+                          </h3>
+                          <div className="overflow-x-auto rounded-lg border border-ink/20">
+                            <table className="w-full text-xs text-left">
+                              <thead className="bg-parchment font-bold">
+                                <tr>
+                                  <th className="p-2.5 border-b border-ink/15">Dimension</th>
+                                  <th className="p-2.5 border-b border-ink/15">{chapter.comparison.heading.split(" vs ")[0]}</th>
+                                  <th className="p-2.5 border-b border-ink/15">{chapter.comparison.heading.split(" vs ")[1] || "Alternative"}</th>
+                                </tr>
+                              </thead>
+                              <tbody className="bg-ivory divide-y divide-ink/10">
+                                {chapter.comparison.rows.map((r) => (
+                                  <tr key={r.feature}>
+                                    <td className="p-2.5 font-semibold">{r.feature}</td>
+                                    <td className="p-2.5">{r.primary}</td>
+                                    <td className="p-2.5 text-ink-muted">{r.related}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          <div className="p-4 rounded-lg bg-[#FFF8E2] border border-[#D5AE65] space-y-1.5 text-xs">
+                            <p className="font-bold text-ink flex items-center gap-1.5">
+                              <Sparkles className="w-3.5 h-3.5 text-terracotta" /> UGC NET / JRF Examination Points
+                            </p>
+                            <ul className="list-disc pl-4 space-y-1 text-ink">
+                              {chapter.examPoints.map((pt, i) => (
+                                <li key={i}>{pt}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </section>
+
+                        <section className="p-4 rounded-lg bg-parchment/60 border border-ink/20 text-xs font-serif leading-relaxed text-ink">
+                          <strong>Chapter Summary:</strong> {chapter.summary}
+                        </section>
+                      </>
+                    )}
+
+                    {activeTab === "illustrations" && (
+                      <div className="space-y-4">
+                        <TextbookDiagram domain={diagramDomain} topicTitle={activeTopic.title} />
+                        <div className="p-4 rounded-lg bg-ivory border border-ink/20 space-y-2 text-xs">
+                          <h4 className="font-bold text-ink">Key Properties Illustrated</h4>
+                          <ul className="list-disc pl-4 space-y-1 text-ink-muted">
+                            {chapter.properties.map((p, i) => (
+                              <li key={i}>{p}</li>
+                            ))}
+                          </ul>
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                      </div>
+                    )}
 
-                  {/* Worked Example */}
-                  <div className="p-4 rounded-xl bg-[#F4EAD5] border border-ink/20 space-y-1.5">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-forest">
-                      {copy.exampleTitle}
-                    </h4>
-                    <p className="text-sm font-serif text-ink leading-relaxed">{copy.exampleBody}</p>
-                  </div>
+                    {activeTab === "examples" && (
+                      <div className="space-y-4">
+                        {chapter.examples.map((ex, i) => (
+                          <div key={i} className="p-4 rounded-xl bg-ivory border border-ink/20 space-y-2.5">
+                            <h4 className="font-serif text-base font-bold text-terracotta">{ex.title}</h4>
+                            <p className="text-xs font-semibold text-ink">{ex.problem}</p>
+                            <ol className="list-decimal pl-5 space-y-1 text-xs font-serif text-ink-muted">
+                              {ex.steps.map((s, si) => (
+                                <li key={si}>{s}</li>
+                              ))}
+                            </ol>
+                            <div className="p-2.5 rounded bg-forest/15 border border-forest/30 text-xs font-semibold text-ink">
+                              Result: {ex.answer}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
-                  {/* Symbols Key */}
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-ink-muted">
-                      {lang === "hinglish" ? "Symbols Ka Matlab (No Confusion)" : "Symbol Decoder"}
-                    </h4>
-                    <div className="grid sm:grid-cols-2 gap-2">
-                      {doc.keySymbols.map((sym) => (
-                        <div
-                          key={sym.sym}
-                          className="p-2.5 rounded-lg bg-ivory border border-ink/20 flex items-center gap-2.5 text-xs"
-                        >
-                          <span className="px-2 py-1 rounded bg-parchment border border-ink/25 font-mono font-bold text-terracotta">
-                            {sym.sym}
-                          </span>
-                          <span className="text-ink">
-                            {lang === "hinglish" ? sym.meaningHi : sym.meaningEn}
-                          </span>
+                    {activeTab === "practice" && (
+                      <div className="space-y-4">
+                        {chapter.practiceQuestions.map((pq, qi) => (
+                          <div key={qi} className="p-4 rounded-xl bg-ivory border border-ink/20 space-y-3">
+                            <p className="font-serif text-sm font-bold text-ink">{pq.question}</p>
+                            <div className="space-y-2">
+                              {pq.options.map((opt, oi) => {
+                                const picked = selectedPracticeOption === oi;
+                                const isRight = oi === pq.correctIndex;
+                                return (
+                                  <button
+                                    key={oi}
+                                    type="button"
+                                    onClick={() => setSelectedPracticeOption(oi)}
+                                    className={`w-full text-left p-3 rounded-lg border text-xs transition ${
+                                      selectedPracticeOption === null
+                                        ? "bg-[#FAF4E8] border-ink/20 hover:bg-parchment"
+                                        : isRight
+                                        ? "bg-forest/20 border-forest font-semibold"
+                                        : picked
+                                        ? "bg-terracotta/20 border-terracotta"
+                                        : "bg-[#FAF4E8] border-ink/15 opacity-75"
+                                    }`}
+                                  >
+                                    {String.fromCharCode(65 + oi)}. {opt}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            {selectedPracticeOption !== null && (
+                              <div className="p-3 rounded bg-parchment/70 border border-ink/15 text-xs text-ink">
+                                {pq.explanation}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        <div className="flex justify-end">
+                          <Link
+                            href="/practice"
+                            className="terracotta-btn px-4 py-2 rounded text-xs font-semibold"
+                          >
+                            Open Full 10,000+ MCQ Arena →
+                          </Link>
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                      </div>
+                    )}
 
-                  {/* Mistake & Exam Shortcut */}
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div className="p-3.5 rounded-lg bg-terracotta/10 border border-terracotta/30 space-y-1">
-                      <p className="text-xs font-bold text-terracotta flex items-center gap-1.5">
-                        <AlertTriangle className="w-3.5 h-3.5" />
-                        {lang === "hinglish" ? "Yeh Galti Mat Karna" : "Common Mistake to Avoid"}
-                      </p>
-                      <p className="text-xs text-ink leading-relaxed">{copy.mistakeToAvoid}</p>
-                    </div>
-                    <div className="p-3.5 rounded-lg bg-forest/10 border border-forest/30 space-y-1">
-                      <p className="text-xs font-bold text-forest flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        {lang === "hinglish" ? "Exam Yaad Rakhne Ki Trick" : "Exam Shortcut"}
-                      </p>
-                      <p className="text-xs text-ink leading-relaxed">{copy.shortcut}</p>
-                    </div>
+                    {activeTab === "flashcards" && (
+                      <div className="space-y-3">
+                        <div className="grid sm:grid-cols-3 gap-3">
+                          {chapter.flashcards.map((fc, idx) => {
+                            const isFlipped = flippedCardIdx === idx;
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => setFlippedCardIdx(isFlipped ? null : idx)}
+                                className={`p-4 rounded-xl border-2 text-left min-h-[140px] flex flex-col justify-between transition ${
+                                  isFlipped
+                                    ? "bg-[#FAF4E8] border-forest"
+                                    : "bg-ivory border-ink/25 hover:border-terracotta"
+                                }`}
+                              >
+                                <span className="text-[10px] font-bold uppercase text-terracotta">
+                                  {isFlipped ? "Answer" : "Tap to Flip"}
+                                </span>
+                                <p className="font-serif text-xs font-semibold text-ink leading-relaxed">
+                                  {isFlipped ? fc.back : fc.front}
+                                </p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-end">
+                          <Link href="/vault" className="forest-btn px-4 py-2 rounded text-xs font-semibold">
+                            Open 520 Flashcards for this Topic →
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab === "more" && (
+                      <div className="space-y-4">
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          <div className="p-4 rounded-lg bg-forest/10 border border-forest/30 space-y-1.5 text-xs">
+                            <p className="font-bold text-forest">Advantages</p>
+                            <ul className="list-disc pl-4 space-y-1 text-ink">
+                              {chapter.advantages.map((a, i) => (
+                                <li key={i}>{a}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div className="p-4 rounded-lg bg-terracotta/10 border border-terracotta/30 space-y-1.5 text-xs">
+                            <p className="font-bold text-terracotta flex items-center gap-1">
+                              <AlertTriangle className="w-3.5 h-3.5" /> Limitations &amp; Misconceptions
+                            </p>
+                            <ul className="list-disc pl-4 space-y-1 text-ink">
+                              {chapter.limitations.map((l, i) => (
+                                <li key={i}>{l}</li>
+                              ))}
+                              {chapter.misconceptions.map((m, i) => (
+                                <li key={`m-${i}`}>
+                                  <strong>Myth:</strong> {m.myth} — <strong>Fact:</strong> {m.reality}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                        <div className="p-4 rounded-lg bg-ivory border border-ink/20 text-xs space-y-2">
+                          <p className="font-bold text-ink">Related Topics</p>
+                          <div className="flex flex-wrap gap-2">
+                            {chapter.relatedTopics.map((rt) => (
+                              <span key={rt} className="px-2.5 py-1 rounded bg-parchment border border-ink/15 font-semibold">
+                                {rt}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

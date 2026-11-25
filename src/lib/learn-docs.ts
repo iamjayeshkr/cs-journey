@@ -1,441 +1,439 @@
 export type LearnLang = "en" | "hinglish";
 
-export type VisualKind =
-  | "logic_gate"
-  | "pipeline"
-  | "memory_stack"
-  | "sql_table"
-  | "cpu_gantt"
-  | "cfg_graph"
-  | "tree_heap"
-  | "automata"
-  | "osi_layers"
-  | "ai_search";
-
-export interface TopicDocContent {
-  visualKind: VisualKind;
-  visualTitle: string;
-  en: {
-    tldr: string;
-    story: string;
-    steps: { heading: string; detail: string }[];
-    exampleTitle: string;
-    exampleBody: string;
-    mistakeToAvoid: string;
-    shortcut: string;
-  };
-  hinglish: {
-    tldr: string;
-    story: string;
-    steps: { heading: string; detail: string }[];
-    exampleTitle: string;
-    exampleBody: string;
-    mistakeToAvoid: string;
-    shortcut: string;
-  };
-  keySymbols: { sym: string; meaningEn: string; meaningHi: string }[];
+export interface TextbookExample {
+  title: string;
+  problem: string;
+  steps: string[];
+  answer: string;
 }
 
-interface UnitDocProfile {
-  visualKind: VisualKind;
-  visualTitle: string;
-  enStory: (topic: string) => string;
-  hiStory: (topic: string) => string;
-  enSteps: (topic: string) => { heading: string; detail: string }[];
-  hiSteps: (topic: string) => { heading: string; detail: string }[];
-  enExample: (topic: string) => { title: string; body: string };
-  hiExample: (topic: string) => { title: string; body: string };
-  enMistake: (topic: string) => string;
-  hiMistake: (topic: string) => string;
-  enShortcut: (topic: string) => string;
-  hiShortcut: (topic: string) => string;
-  symbols: { sym: string; meaningEn: string; meaningHi: string }[];
+export interface TextbookPracticeQ {
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
 }
 
-const UNIT_PROFILES: Record<string, UnitDocProfile> = {
+export interface TextbookChapter {
+  introduction: string;
+  definition: string;
+  principles: string[];
+  terminology: { term: string; meaning: string }[];
+  workingMechanism: string[];
+  derivation: {
+    formula: string;
+    variables: { sym: string; desc: string }[];
+    steps: string[];
+    numericalExample: string;
+    calculationMistake: string;
+  };
+  examples: TextbookExample[];
+  properties: string[];
+  comparison: {
+    heading: string;
+    rows: { feature: string; primary: string; related: string }[];
+  };
+  advantages: string[];
+  limitations: string[];
+  misconceptions: { myth: string; reality: string }[];
+  examPoints: string[];
+  summary: string;
+  practiceQuestions: TextbookPracticeQ[];
+  flashcards: { front: string; back: string }[];
+  relatedTopics: string[];
+}
+
+interface UnitTextbookTemplate {
+  principles: string[];
+  terminology: { term: string; meaning: string }[];
+  mechanism: string[];
+  derivation: TextbookChapter["derivation"];
+  comparison: TextbookChapter["comparison"];
+  advantages: string[];
+  limitations: string[];
+  misconceptions: { myth: string; reality: string }[];
+  examPoints: string[];
+  relatedTopics: string[];
+}
+
+const UNIT_TEMPLATES: Record<string, UnitTextbookTemplate> = {
   Discrete: {
-    visualKind: "logic_gate",
-    visualTitle: "Interactive Truth & Logic Explorer",
-    enStory: (t) =>
-      `Think of ${t} like the grammar rules of mathematics. Just as English needs clear rules so two people don't misunderstand a sentence, computers need ${t} so every True/False decision, set grouping, or network graph is 100% unambiguous.`,
-    hiStory: (t) =>
-      `${t} ko maths ki grammar samjho! Jaise baat karte waqt clear rules chahiye taaki koi confusion na ho, waise hi computer ko ${t} chahiye taaki har True/False, set ya graph ka decision bilkul pakka aur exact ho.`,
-    enSteps: (t) => [
-      { heading: "1. Spot the Building Blocks", detail: `Break ${t} into basic elements: statements (P, Q), sets (A, B), or vertices & edges (V, E).` },
-      { heading: "2. Apply the Core Rule", detail: `Check how elements combine — e.g., P → Q is only false when P is True and Q is False.` },
-      { heading: "3. Verify Edge Cases", detail: `Test empty sets (∅), zero-degree nodes, or boundary values before picking an MCQ answer.` },
+    principles: [
+      "Formal truth values and set memberships must remain unambiguous under all domain assignments.",
+      "Logical equivalence (≡) holds if and only if two compound expressions share identical truth tables across every valuation.",
+      "Counting principles partition complex structures into disjoint subsets to avoid overcounting.",
     ],
-    hiSteps: (t) => [
-      { heading: "1. Basic Pieces Pehchano", detail: `${t} ko chhote hisson mein todo: statements (P, Q), sets (A, B), ya graph ke nodes aur edges.` },
-      { heading: "2. Main Rule Lagao", detail: `Dekho elements kaise judte hain — jaise P → Q sirf tab False hota hai jab P True ho aur Q False.` },
-      { heading: "3. Edge Cases Check Karo", detail: `MCQ mark karne se pehle empty set (∅) ya boundary values zaroor check karo.` },
+    terminology: [
+      { term: "Tautology (⊤)", meaning: "A compound proposition that evaluates to True under every possible truth assignment." },
+      { term: "Contrapositive (¬Q → ¬P)", meaning: "Negating and reversing an implication; always logically equivalent to P → Q." },
+      { term: "Cardinality (|A|)", meaning: "The exact number of distinct elements contained in set A." },
     ],
-    enExample: (t) => ({
-      title: `Quick Walkthrough: ${t}`,
-      body: `Suppose "If it rains (P), I carry an umbrella (Q)". If it rains (T) and I have NO umbrella (F), the promise breaks (False). In all other 3 cases, the promise holds (True)!`,
-    }),
-    hiExample: (t) => ({
-      title: `Asaan Example: ${t}`,
-      body: `Maan lo promise hai: "Agar baarish hui (P), toh chhata launga (Q)". Promise sirf tab tootega jab baarish ho (True) aur chhata na ho (False). Baaki sab cases mein promise True rahega!`,
-    }),
-    enMistake: () => "Students often confuse Converse (Q → P) with Contrapositive (¬Q → ¬P). Only Contrapositive is equivalent to P → Q!",
-    hiMistake: () => "Sabse badi galti: Converse (Q → P) ko P → Q ke barabar maan lena. Sirf Contrapositive (¬Q → ¬P) hi barabar hota hai!",
-    enShortcut: () => "For '¬(∀x P(x))', flip ∀ to ∃ and push ¬ inside: ∃x ¬P(x).",
-    hiShortcut: () => "Trick: Jab bhi 'Sabhi (∀)' ka NOT nikalna ho, toh 'Kam se kam ek (∃)' kar do aur andar NOT laga do!",
-    symbols: [
-      { sym: "→", meaningEn: "If ... then (Implies)", meaningHi: "Agar ... toh (Implication)" },
-      { sym: "≡", meaningEn: "Logically equal (same truth table)", meaningHi: "Bilkul barabar (same output)" },
-      { sym: "¬", meaningEn: "NOT (flips True/False)", meaningHi: "Ulta kar do (True ko False)" },
-      { sym: "∀ / ∃", meaningEn: "For All / There Exists", meaningHi: "Sabhi ke liye / Kam se kam ek" },
+    mechanism: [
+      "Identify atomic propositions, sets, or graph vertices and define the domain of discourse.",
+      "Translate natural-language constraints into formal symbolic expressions using connectives (¬, ∧, ∨, →) or quantifiers (∀, ∃).",
+      "Simplify expressions systematically via De Morgan's Laws, distributive laws, or Inclusion-Exclusion.",
     ],
+    derivation: {
+      formula: "|A ∪ B| = |A| + |B| − |A ∩ B|   and   P → Q ≡ ¬P ∨ Q",
+      variables: [
+        { sym: "|A|, |B|", desc: "Sizes of finite sets A and B respectively" },
+        { sym: "|A ∩ B|", desc: "Number of elements present in both A and B" },
+        { sym: "P, Q", desc: "Atomic Boolean propositions taking values in {True, False}" },
+      ],
+      steps: [
+        "Summing |A| + |B| counts every element in the intersection A ∩ B twice.",
+        "Subtracting |A ∩ B| once restores exact single-counting for every element in A ∪ B.",
+        "Similarly, P → Q is false solely when P = T and Q = F, matching ¬P ∨ Q identically.",
+      ],
+      numericalExample:
+        "If 45 students study DBMS (|A| = 45), 35 study OS (|B| = 35), and 15 study both (|A ∩ B| = 15), then total students = 45 + 35 − 15 = 65.",
+      calculationMistake:
+        "Forgetting to add back the triple intersection |A ∩ B ∩ C| when extending Inclusion-Exclusion to three sets.",
+    },
+    comparison: {
+      heading: "Euler Path vs Hamiltonian Path",
+      rows: [
+        { feature: "Traversal Target", primary: "Visits every EDGE exactly once", related: "Visits every VERTEX exactly once" },
+        { feature: "Decision Complexity", primary: "Polynomial time O(V + E)", related: "NP-Complete in general graphs" },
+        { feature: "Degree Condition", primary: "0 or 2 vertices of odd degree", related: "No simple degree characterization" },
+      ],
+    },
+    advantages: [
+      "Provides rigorous, machine-verifiable foundations for algorithms, proofs, and digital circuits.",
+      "Eliminates ambiguity in specification of database queries and formal verification.",
+    ],
+    limitations: [
+      "Combinatorial state spaces grow exponentially (2^n), requiring heuristic pruning for large n.",
+    ],
+    misconceptions: [
+      { myth: "Converse (Q → P) is equivalent to P → Q.", reality: "Only the Contrapositive (¬Q → ¬P) is logically equivalent to P → Q." },
+      { myth: "¬(∀x P(x)) equals ∀x ¬P(x).", reality: "By quantifier negation, ¬(∀x P(x)) ≡ ∃x ¬P(x)." },
+    ],
+    examPoints: [
+      "Number of Boolean functions of n variables is 2^(2^n).",
+      "Handshaking Lemma: ∑ deg(v) = 2|E|, hence odd-degree vertices are always even in number.",
+      "Connected planar graph satisfies Euler's formula: v − e + f = 2.",
+    ],
+    relatedTopics: ["Propositional Logic", "Graph Theory", "Combinatorics & Recurrences"],
   },
   "Computer System": {
-    visualKind: "pipeline",
-    visualTitle: "Interactive CPU Pipeline & Gate Flow",
-    enStory: (t) =>
-      `Imagine a busy car wash with 4 stations: Soap, Scrub, Rinse, and Dry. Instead of waiting for one car to finish all 4 steps before starting the next, ${t} keeps every hardware station busy at the same time so work finishes much faster!`,
-    hiStory: (t) =>
-      `Ek car-wash ki line socho jisme 4 stations hain: Soap, Wash, Rinse, Dry. Agar ek gaadi ke poora nikalne ka wait karenge toh bahut time lagega. ${t} mein har station ek saath alag gaadi par kaam karta hai — speed 4x ho jaati hai!`,
-    enSteps: (t) => [
-      { heading: "1. Bits & Signals (0 and 1)", detail: `Everything inside ${t} runs on binary voltage levels (0 = LOW, 1 = HIGH).` },
-      { heading: "2. Hardware Stages", detail: `Instructions flow through Fetch -> Decode -> Execute -> Memory -> Writeback.` },
-      { heading: "3. Speed vs Cost Trade-off", detail: `Fastest memory (Registers/Cache) is tiny; slower memory (RAM/Disk) is huge.` },
+    principles: [
+      "All arithmetic, control, and memory operations reduce to binary switching circuits built from universal gates (NAND/NOR).",
+      "Temporal and spatial locality allow small, fast caches to approximate the speed of registers at the cost of DRAM.",
+      "Instruction-level parallelism overlaps Fetch, Decode, Execute, Memory, and Writeback across distinct clock cycles.",
     ],
-    hiSteps: (t) => [
-      { heading: "1. Sab Kuch 0 aur 1 Hai", detail: `${t} ke andar saare signals sirf 0 (OFF) aur 1 (ON) mein chalte hain.` },
-      { heading: "2. Step-by-Step Hardware Flow", detail: `Har instruction Fetch -> Decode -> Execute -> Memory -> Writeback stages se guzarta hai.` },
-      { heading: "3. Fast vs Sasta Memory", detail: `Cache aur Registers super fast par chhote hote hain; RAM/Disk bade par thode slow.` },
+    terminology: [
+      { term: "CPI (Cycles Per Instruction)", meaning: "Average number of clock cycles consumed per executed instruction." },
+      { term: "Cache Hit Ratio (h)", meaning: "Fraction of memory accesses satisfied directly by cache memory." },
+      { term: "Pipeline Hazard", meaning: "Structural, Data, or Control dependency that stalls the next instruction." },
     ],
-    enExample: (t) => ({
-      title: `Hardware Example: ${t}`,
-      body: `With a 5-stage pipeline running 100 instructions (1 cycle/stage): non-pipelined takes 500 cycles, pipelined takes only 5 + 99 = 104 cycles (~4.8x faster)!`,
-    }),
-    hiExample: (t) => ({
-      title: `Real Calculation: ${t}`,
-      body: `Agar 5-stage pipeline mein 100 instructions chalani hain: bina pipeline 500 cycles lagenge, par pipeline ke saath sirf 5 + 99 = 104 cycles (~4.8x fast)!`,
-    }),
-    enMistake: () => "Forgetting that pipeline clock period is limited by the SLOWEST stage plus latch delay.",
-    hiMistake: () => "Yeh mat bhoolna ki pipeline ki speed hamesha sabse SLOW stage par depend karti hai!",
-    enShortcut: () => "NAND & NOR are Universal Gates; 2's complement of N is (~N + 1).",
-    hiShortcut: () => "Yaad rakho: NAND aur NOR Universal Gates hain — inse koi bhi gate ban sakta hai.",
-    symbols: [
-      { sym: "⊕", meaningEn: "XOR: 1 when inputs differ", meaningHi: "XOR: Alag inputs par 1 deta hai" },
-      { sym: "2^n", meaningEn: "Addressable locations with n bits", meaningHi: "n bits se kitne addresses banenge" },
-      { sym: "h", meaningEn: "Cache Hit Ratio (0 to 1)", meaningHi: "Cache mein data milne ka chance" },
+    mechanism: [
+      "Program Counter (PC) supplies the instruction address; Control Unit fetches and decodes the opcode.",
+      "ALU executes arithmetic/logical operations on register operands and updates status flags.",
+      "Memory hierarchy resolves addresses through TLB and L1/L2 cache before accessing main RAM.",
     ],
-  },
-  Programming: {
-    visualKind: "memory_stack",
-    visualTitle: "Interactive Stack Frame & Pointer Visualizer",
-    enStory: (t) =>
-      `Think of ${t} like writing a recipe with sticky notes on your kitchen wall. Functions put their local ingredients on top of a Stack of plates — when a function finishes, its plate is removed automatically!`,
-    hiStory: (t) =>
-      `${t} ko kitchen mein plates ke stack jaisa samjho! Jab bhi naya function call hota hai, ek nayi plate upar rakhi jaati hai (Stack Frame). Kaam khatam hote hi woh plate hat jaati hai!`,
-    enSteps: (t) => [
-      { heading: "1. Where Data Lives", detail: `Stack holds local variables automatically; Heap holds dynamic objects until freed/GC'd.` },
-      { heading: "2. Pointers & References", detail: `A pointer stores a memory address (like a house number), not the value itself.` },
-      { heading: "3. Clean Abstraction", detail: `Functions, recursion, and OOP classes break big programs into reusable pieces.` },
+    derivation: {
+      formula: "S = (k · n) / (k + n − 1)   and   EMAT = h · T_cache + (1 − h) · (T_cache + T_mem)",
+      variables: [
+        { sym: "k", desc: "Number of stages in the instruction pipeline" },
+        { sym: "n", desc: "Total number of instructions executed" },
+        { sym: "h", desc: "Cache hit rate (0 ≤ h ≤ 1)" },
+        { sym: "T_cache, T_mem", desc: "Access latency of cache and main memory respectively" },
+      ],
+      steps: [
+        "Non-pipelined execution of n instructions requires k · n cycles.",
+        "Pipelined execution fills the pipe in k cycles and completes the remaining (n − 1) instructions at 1 per cycle: total = k + n − 1.",
+        "As n → ∞, speedup S approaches k (the ideal pipeline depth).",
+      ],
+      numericalExample:
+        "For k = 5 stages and n = 100 instructions: S = (5 × 100) / (5 + 100 − 1) = 500 / 104 ≈ 4.81× speedup.",
+      calculationMistake:
+        "Using uniform stage time instead of max(stage_i) + latch_delay when computing the pipeline clock cycle.",
+    },
+    comparison: {
+      heading: "Direct-Mapped Cache vs Set-Associative Cache",
+      rows: [
+        { feature: "Placement Rule", primary: "Each block maps to exactly 1 line", related: "Block maps to any of k lines in a set" },
+        { feature: "Conflict Misses", primary: "High under stride collisions", related: "Significantly reduced" },
+        { feature: "Comparator Hardware", primary: "1 tag comparator", related: "k parallel tag comparators" },
+      ],
+    },
+    advantages: [
+      "Pipelining increases instruction throughput without reducing individual instruction latency.",
+      "DMA offloads bulk I/O transfers from the CPU.",
     ],
-    hiSteps: (t) => [
-      { heading: "1. Data Kahan Rehta Hai", detail: `Local variables Stack mein rehte hain; dynamic data (new/malloc) Heap mein banta hai.` },
-      { heading: "2. Pointer = Ghar Ka Address", detail: `Pointer khud value nahi rakhta, balki uss value ka RAM address store karta hai.` },
-      { heading: "3. Code Reuse", detail: `Functions, recursion aur OOP bade code ko chhote manageable parts mein baant dete hain.` },
+    limitations: [
+      "Branch mispredictions and true data hazards (RAW) degrade ideal pipeline speedup.",
     ],
-    enExample: (t) => ({
-      title: `Code Trace: ${t}`,
-      body: `In Call by Value, changing parameter x inside a helper does NOT change caller's variable. In Call by Reference, both point to the same box, so changes stick!`,
-    }),
-    hiExample: (t) => ({
-      title: `Code Samjho: ${t}`,
-      body: `Call by Value mein photocopy jaati hai — function ke andar change karne se asli variable nahi badalta. Call by Reference mein asli address jaata hai!`,
-    }),
-    enMistake: () => "Returning the address of a local stack variable creates a dangling pointer!",
-    hiMistake: () => "Kabhi bhi local variable ka address function se return mat karo — stack pop hote hi woh invalid ho jaata hai!",
-    enShortcut: () => "C/Java/Python = Row-Major; static variables keep their value across calls.",
-    hiShortcut: () => "Trick: static variable ek hi baar initialize hota hai aur poore program tak value yaad rakhta hai.",
-    symbols: [
-      { sym: "*p", meaningEn: "Dereference: value at address p", meaningHi: "p address par rakhi asli value" },
-      { sym: "&x", meaningEn: "Address-of operator", meaningHi: "x ka RAM address" },
-      { sym: "O(1)", meaningEn: "Constant time/space", meaningHi: "Fix time — input size se farq nahi" },
+    misconceptions: [
+      { myth: "Pipelining reduces the execution time of a single instruction.", reality: "Pipelining increases throughput (instructions/sec); single-instruction latency often increases slightly due to latch overhead." },
     ],
+    examPoints: [
+      "2's complement range for n bits is [−2^(n−1), +2^(n−1) − 1] with a unique zero.",
+      "IEEE 754 Single Precision (32-bit): 1 sign bit, 8 exponent bits (bias 127), 23 mantissa bits.",
+    ],
+    relatedTopics: ["Digital Logic & K-Maps", "Pipelining & Hazards", "Cache & Virtual Memory"],
   },
   Database: {
-    visualKind: "sql_table",
-    visualTitle: "Interactive SQL Filter (σ) & Projection (π) Table",
-    enStory: (t) =>
-      `Think of a Database like a super-disciplined school register. If you write a student's phone number in 50 places and they change their number, updating it everywhere is a nightmare. ${t} keeps data clean, linked, and safe even if the power goes out mid-save!`,
-    hiStory: (t) =>
-      `Database ko ek smart school register samjho! Agar ek student ka phone number 50 jagah likha ho aur woh badal jaaye, toh har jagah update karna mushkil hai. ${t} data ko clean, bina duplicate aur bilkul safe rakhta hai — chahe light chali jaaye!`,
-    enSteps: (t) => [
-      { heading: "1. Tables, Rows & Keys", detail: `Primary Key uniquely identifies each row; Foreign Key links two tables cleanly.` },
-      { heading: "2. Relational Operations", detail: `σ filters rows (WHERE), π picks columns (SELECT), and ⋈ joins matching tables.` },
-      { heading: "3. ACID & Normalization", detail: `Normalization removes redundancy; ACID guarantees safe concurrent transactions.` },
+    principles: [
+      "Data independence separates logical schema design from physical file storage.",
+      "Normalization decomposes relations along functional dependencies to eliminate insertion, deletion, and update anomalies.",
+      "Concurrency control guarantees serializable execution while preserving ACID durability.",
     ],
-    hiSteps: (t) => [
-      { heading: "1. Table, Row aur Key", detail: `Primary Key har row ko unique banati hai; Foreign Key do tables ko jodti hai.` },
-      { heading: "2. σ aur π Ka Khel", detail: `σ (Sigma) = rows filter karo (WHERE); π (Pi) = columns chuno (SELECT); ⋈ = Join karo.` },
-      { heading: "3. Clean & Safe Data", detail: `Normalization duplicate data hatata hai, aur ACID transactions ko crash se bachata hai.` },
+    terminology: [
+      { term: "Candidate Key", meaning: "A minimal superkey whose attributes uniquely identify every tuple in a relation." },
+      { term: "BCNF", meaning: "Every non-trivial functional dependency X → Y has X as a superkey." },
+      { term: "Conflict Serializability", meaning: "Schedule equivalence to a serial order verified by an acyclic precedence graph." },
     ],
-    enExample: (t) => ({
-      title: `SQL & Normalization: ${t}`,
-      body: `To find CS students with marks > 80: Relational Algebra writes π_name(σ_dept='CS' ∧ marks>80(Student)). Filter rows first, then pick the name column!`,
-    }),
-    hiExample: (t) => ({
-      title: `Easy Example: ${t}`,
-      body: `Agar CS branch ke >80 marks wale students chahiye: pehle σ se rows filter karo (WHERE dept='CS' AND marks>80), phir π se sirf Name column nikalo!`,
-    }),
-    enMistake: () => "Putting COUNT(*) > 2 inside WHERE instead of HAVING — WHERE runs BEFORE GROUP BY!",
-    hiMistake: () => "WHERE ke andar kabhi COUNT(*) ya SUM() mat lagao — groups filter karne ke liye hamesha HAVING use karo!",
-    enShortcut: () => "1NF (Atomic) -> 2NF (No Partial) -> 3NF (No Transitive) -> BCNF (LHS is Superkey).",
-    hiShortcut: () => "Trick: σ = Select rows, π = Pick columns! Aur BCNF matlab har arrow ke left side Superkey honi chahiye.",
-    symbols: [
-      { sym: "σ", meaningEn: "Select rows matching condition", meaningHi: "Condition se rows chhantna (WHERE)" },
-      { sym: "π", meaningEn: "Project specific columns", meaningHi: "Sirf chune hue columns dikhana" },
-      { sym: "⋈", meaningEn: "Join two tables on common key", meaningHi: "Do tables ko common column se jodna" },
-      { sym: "→", meaningEn: "Functional Dependency (X determines Y)", meaningHi: "X pata ho toh Y pakka pata chalega" },
+    mechanism: [
+      "Compute attribute closures (X+) to identify candidate keys and minimal covers of functional dependencies.",
+      "Decompose relations into 3NF or BCNF while verifying lossless-join: (R1 ∩ R2) → R1 or R2.",
+      "Index hot lookup keys using balanced B+ Trees where all record pointers reside in linked leaf nodes.",
     ],
-  },
-  "Operating System": {
-    visualKind: "cpu_gantt",
-    visualTitle: "Interactive CPU Scheduling Gantt Explorer",
-    enStory: (t) =>
-      `The Operating System is like the Traffic Police + Kitchen Manager of your computer. Ten apps want the CPU, RAM, and Disk at the exact same time — ${t} decides who goes next so nobody crashes or starves!`,
-    hiStory: (t) =>
-      `Operating System tumhare computer ka Traffic Police aur Manager hai! Jab 10 apps ek saath CPU aur RAM maangti hain, toh ${t} decide karta hai kiski baari kab aayegi taaki system hang ya deadlock na ho!`,
-    enSteps: (t) => [
-      { heading: "1. Process Lifecycle", detail: `A program in execution moves between New -> Ready -> Running -> Waiting -> Terminated.` },
-      { heading: "2. Fair & Fast Scheduling", detail: `SJF/SRTF minimizes average wait time; Round Robin gives everyone a fair time quantum.` },
-      { heading: "3. Memory & Deadlocks", detail: `Paging avoids external fragmentation; breaking any 1 of 4 Coffman conditions prevents deadlock.` },
+    derivation: {
+      formula: "Lossless Join: (R1 ∩ R2) → R1  ∨  (R1 ∩ R2) → R2",
+      variables: [
+        { sym: "R1, R2", desc: "Decomposed sub-relations of schema R = R1 ∪ R2" },
+        { sym: "R1 ∩ R2", desc: "Common attributes shared between R1 and R2" },
+      ],
+      steps: [
+        "When R1 and R2 are natural-joined, tuples match on shared attributes R1 ∩ R2.",
+        "If R1 ∩ R2 uniquely determines all attributes of R1 (or R2), no spurious tuples can be synthesized.",
+        "Therefore, R1 ⋈ R2 reconstructs the original relation R exactly.",
+      ],
+      numericalExample:
+        "R(A, B, C) with FD A → B decomposed into R1(A, B) and R2(A, C): R1 ∩ R2 = {A}, and A → AB holds, so the decomposition is lossless.",
+      calculationMistake:
+        "Assuming every 3NF relation is automatically in BCNF; 3NF permits X → Y when Y is a prime attribute even if X is not a superkey.",
+    },
+    comparison: {
+      heading: "B-Tree vs B+ Tree Indexing",
+      rows: [
+        { feature: "Data Pointer Location", primary: "Internal and leaf nodes", related: "Leaf nodes only" },
+        { feature: "Range Queries", primary: "Requires tree traversal", related: "Fast sequential scan via leaf links" },
+        { feature: "Internal Fan-out", primary: "Lower (pointers occupy space)", related: "Higher (keys only -> shallower tree)" },
+      ],
+    },
+    advantages: [
+      "ACID transactions guarantee consistency despite concurrent access and system crashes.",
+      "Declarative SQL lets the query optimizer select optimal join orders and index scans.",
     ],
-    hiSteps: (t) => [
-      { heading: "1. Process Ke States", detail: `Chalta hua program Ready -> Running -> Waiting states ke beech ghoomta rehta hai.` },
-      { heading: "2. Scheduling Rules", detail: `SRTF sabse kam wait time deta hai; Round Robin har app ko barabar time-slice deta hai.` },
-      { heading: "3. RAM aur Deadlock", detail: `Paging se RAM waste nahi hoti; Deadlock rokne ke liye 4 conditions mein se koi ek tod do.` },
+    limitations: [
+      "Strict normalization can increase join overhead on read-heavy analytical workloads.",
     ],
-    enExample: (t) => ({
-      title: `Scheduling Snapshot: ${t}`,
-      body: `If P1 needs 8ms and P2 needs 2ms arriving together: FCFS makes P2 wait 8ms (avg 4ms). SJF runs P2 first, so avg wait drops to 1ms!`,
-    }),
-    hiExample: (t) => ({
-      title: `Real Life Example: ${t}`,
-      body: `Dukaan par kisi ko 8 minute ka kaam hai aur kisi ko sirf 2 minute ka: chhote kaam (SJF) ko pehle nipatao toh sabka average waiting time bahut kam ho jaata hai!`,
-    }),
-    enMistake: () => "Thinking adding more RAM frames ALWAYS lowers page faults — FIFO suffers from Belady's Anomaly!",
-    hiMistake: () => "FIFO page replacement mein kabhi-kabhi zyada RAM frames dene par bhi page faults badh jaate hain (Belady's Anomaly)!",
-    enShortcut: () => "TAT = Completion − Arrival; Waiting Time = TAT − Burst.",
-    hiShortcut: () => "Formula yaad rakho: TAT = Exit − Entry, aur Wait = TAT − Kaam ka time (Burst).",
-    symbols: [
-      { sym: "WT", meaningEn: "Waiting Time in Ready Queue", meaningHi: "Queue mein kitni der wait kiya" },
-      { sym: "TAT", meaningEn: "Turnaround Time (Exit − Arrival)", meaningHi: "Aane se jaane tak ka total time" },
+    misconceptions: [
+      { myth: "WHERE can filter aggregate results like COUNT(*) > 5.", reality: "WHERE filters rows prior to grouping; HAVING must be used for post-aggregation predicates." },
     ],
-  },
-  "Software Engineering": {
-    visualKind: "cfg_graph",
-    visualTitle: "Interactive Control Flow & Cyclomatic Complexity V(G)",
-    enStory: (t) =>
-      `Building software without ${t} is like building a 10-story apartment without a blueprint or safety inspection. ${t} helps teams estimate cost, test every branch, and keep modules clean so fixing one bug doesn't create three new ones!`,
-    hiStory: (t) =>
-      `Bina ${t} ke bada software banana bina naksha banaye 10-manzila building banane jaisa hai! ${t} humein sikhata hai ki time/cost kaise estimate karein, bugs kaise pakdein aur code clean kaise rakhein.`,
-    enSteps: (t) => [
-      { heading: "1. Right Process Model", detail: `Waterfall for fixed specs; Agile/Spiral when requirements evolve rapidly.` },
-      { heading: "2. Clean Architecture", detail: `Aim for HIGH Cohesion (focused module) and LOW Coupling (minimal interdependence).` },
-      { heading: "3. Systematic Testing", detail: `Measure independent paths with McCabe's V(G) = P + 1 and test boundaries.` },
+    examPoints: [
+      "Every BCNF relation is in 3NF, but not every 3NF relation is in BCNF.",
+      "Strict 2PL prevents cascading rollbacks by holding exclusive locks until commit.",
     ],
-    hiSteps: (t) => [
-      { heading: "1. Sahi Model Chuno", detail: `Requirements fix hain toh Waterfall; baar-baar badalti hain toh Agile/Spiral best hai.` },
-      { heading: "2. High Cohesion, Low Coupling", detail: `Har module apna kaam pakke se kare (High Cohesion) aur doosron par kam depend kare (Low Coupling).` },
-      { heading: "3. Smart Testing", detail: `Cyclomatic Complexity V(G) = P + 1 se pata chalta hai kam se kam kitne test cases chahiye.` },
-    ],
-    enExample: (t) => ({
-      title: `Testing Metric: ${t}`,
-      body: `A function with 2 'if' statements and 1 'while' loop has P = 3 predicate nodes, so Cyclomatic Complexity V(G) = 3 + 1 = 4 independent test paths!`,
-    }),
-    hiExample: (t) => ({
-      title: `Asaan Hisab: ${t}`,
-      body: `Agar code mein 2 'if' aur 1 'while' loop hai, toh total decision points P = 3 hue. Isliye V(G) = 3 + 1 = 4 test cases zaroori hain!`,
-    }),
-    enMistake: () => "Confusing Verification ('building it right' — reviews) with Validation ('building the right thing' — user testing).",
-    hiMistake: () => "Verification = specs ke hisab se sahi banana; Validation = customer ko jo chahiye wohi banana!",
-    enShortcut: () => "Best Cohesion = Functional; Best Coupling = Data Coupling.",
-    hiShortcut: () => "Golden Rule: Cohesion HIGH hona chahiye, Coupling LOW hona chahiye!",
-    symbols: [
-      { sym: "V(G)", meaningEn: "Cyclomatic Complexity = E − N + 2 = P + 1", meaningHi: "Independent paths ki ginti (P + 1)" },
-      { sym: "KLOC", meaningEn: "Thousands of Lines of Code", meaningHi: "Hazaar lines of code" },
-    ],
-  },
-  "Data Structures": {
-    visualKind: "tree_heap",
-    visualTitle: "Interactive Tree, Heap & Complexity Visualizer",
-    enStory: (t) =>
-      `Suppose you have 10 lakh books. If you dump them in one big pile, finding one book takes hours. If you arrange them alphabetically or in a Binary Search Tree, you find any book in just 20 steps! That's the magic of ${t}.`,
-    hiStory: (t) =>
-      `Socho tumhare paas 10 lakh kitaabein hain. Agar dher laga kar rakhoge toh ek kitaab dhoondhne mein ghante lagenge. Agar unhe Binary Search Tree ya Sorted order mein rakhoge, toh sirf 20 steps mein mil jaayegi! Yahi ${t} ka jaadu hai.`,
-    enSteps: (t) => [
-      { heading: "1. Pick the Right Container", detail: `Arrays for O(1) index access; Linked Lists for O(1) splices; Hash Tables for O(1) avg lookup.` },
-      { heading: "2. Measure Growth (O, Θ, Ω)", detail: `Ignore constants and small terms — focus on how runtime scales as n -> ∞.` },
-      { heading: "3. Divide, Conquer & Balance", detail: `Balanced trees (AVL/RB) and Divide-and-Conquer keep operations at O(log n) or O(n log n).` },
-    ],
-    hiSteps: (t) => [
-      { heading: "1. Sahi Data Structure Chuno", detail: `Fast index ke liye Array, fast insert/delete ke liye Linked List, aur fast search ke liye Hash Map / BST.` },
-      { heading: "2. Speed Naapo (Big-O)", detail: `Chhote numbers chhodo — dekho jab data (n) bahut bada hoga tab time kitni tezi se badhega.` },
-      { heading: "3. Balance Rakho", detail: `AVL/Red-Black tree height ko O(log n) par control rakhte hain taaki search slow na ho.` },
-    ],
-    enExample: (t) => ({
-      title: `Speed Comparison: ${t}`,
-      body: `Searching 1,000,000 sorted items: Linear Scan takes up to 1,000,000 steps (O(n)), while Binary Search cuts the problem in half each step and finishes in ≤ 20 steps (O(log n))!`,
-    }),
-    hiExample: (t) => ({
-      title: `Power of O(log n): ${t}`,
-      body: `10 lakh sorted items mein ek item dhoondhna hai: Linear search mein 10 lakh steps lag sakte hain, par Binary Search har baar aadha karke sirf 20 steps mein dhoondh leta hai!`,
-    }),
-    enMistake: () => "Assuming Build-Heap takes O(n log n) — bottom-up Build-Heap actually runs in O(n) linear time!",
-    hiMistake: () => "Build-Heap O(n log n) nahi balki O(n) hota hai, kyunki neeche ke zyada nodes ko kam swap karna padta hai!",
-    enShortcut: () => "Master Theorem: T(n) = aT(n/b) + f(n) compares leaf work n^(log_b a) vs root work f(n).",
-    hiShortcut: () => "Master Theorem mein bas n^(log_b a) aur f(n) ki race karao — jo bada woh jeeta, barabar toh log n lagao!",
-    symbols: [
-      { sym: "O()", meaningEn: "Upper bound (worst-case ceiling)", meaningHi: "Zyada se zyada itna time lagega" },
-      { sym: "Θ()", meaningEn: "Tight bound (exact growth)", meaningHi: "Bilkul exact growth rate" },
-      { sym: "Ω()", meaningEn: "Lower bound (best-case floor)", meaningHi: "Kam se kam itna time lagega" },
-    ],
-  },
-  "Theory of Computation": {
-    visualKind: "automata",
-    visualTitle: "Interactive Finite Automaton (DFA) State Stepper",
-    enStory: (t) =>
-      `Think of ${t} like a Metro Ticket Gate or Vending Machine. It doesn't have an infinite brain — it only remembers its current State (Locked or Unlocked) and moves to the next state when you tap a coin or card!`,
-    hiStory: (t) =>
-      `${t} ko Metro ke Ticket Gate ya Vending Machine jaisa samjho! Iske paas bahut bada dimaag nahi hota — bas current State yaad rakhta hai (Locked/Unlocked) aur input milte hi agli state par jump karta hai!`,
-    enSteps: (t) => [
-      { heading: "1. The 5-Tuple Machine", detail: `Every machine has States (Q), Alphabet (Σ), Transition rule (δ), Start (q₀), and Final states (F).` },
-      { heading: "2. Memory Power Ladder", detail: `DFA (no extra memory) < PDA (1 Stack) < Turing Machine (Infinite Tape).` },
-      { heading: "3. What Can Never Be Solved", detail: `Even a Turing Machine cannot solve the Halting Problem (Undecidable).` },
-    ],
-    hiSteps: (t) => [
-      { heading: "1. Machine Ke 5 Hissay", detail: `Q (States), Σ (Input letters), δ (Transition arrow), q₀ (Start), aur F (Final goal state).` },
-      { heading: "2. Power Ki Seedhi", detail: `DFA (bina memory) < PDA (ek Stack) < Turing Machine (unlimited Tape).` },
-      { heading: "3. Limits of Computing", detail: `Halting Problem jaisi kuch cheezein Turing Machine bhi kabhi solve nahi kar sakti (Undecidable).` },
-    ],
-    enExample: (t) => ({
-      title: `Machine Example: ${t}`,
-      body: `To accept strings ending in 'ab': stay in q0 until 'a' moves to q1, then 'b' moves to accepting state q2. Any other letter loops back cleanly!`,
-    }),
-    hiExample: (t) => ({
-      title: `Asaan Machine: ${t}`,
-      body: `Agar 'ab' par khatam hone wali string accept karni hai: 'a' milne par q1 jao, phir 'b' milte hi Final state q2 pahunch jao!`,
-    }),
-    enMistake: () => "Thinking Context-Free Languages are closed under Intersection or Complement — they are NOT!",
-    hiMistake: () => "Yaad rakhna: Context-Free Languages Intersection aur Complement ke under closed NAHI hoti!",
-    enShortcut: () => "Chomsky Hierarchy: Regular (Type 3) ⊂ CFL (Type 2) ⊂ CSL (Type 1) ⊂ RE (Type 0).",
-    hiShortcut: () => "Trick: Regular -> DFA, Context-Free -> PDA, Recursively Enumerable -> Turing Machine!",
-    symbols: [
-      { sym: "Σ", meaningEn: "Finite input alphabet", meaningHi: "Allowed input letters ka set" },
-      { sym: "δ", meaningEn: "Transition function (state + input -> next state)", meaningHi: "Agli state batane wala rule" },
-      { sym: "ε", meaningEn: "Empty string (length 0)", meaningHi: "Khaali string (bina character ke)" },
-    ],
-  },
-  "Data Communication": {
-    visualKind: "osi_layers",
-    visualTitle: "Interactive OSI 7-Layer Packet Journey",
-    enStory: (t) =>
-      `Sending a WhatsApp message across the internet is like mailing a parcel across countries. You write the letter (Application), pack & address it (TCP/IP), hand it to the courier truck (Data Link), and it travels over wires/Wi-Fi (Physical)!`,
-    hiStory: (t) =>
-      `Internet par ek message bhejna courier parcel bhejne jaisa hai! Pehle letter likho (Application), uspe pin-code aur address likho (TCP/IP), courier truck mein daalo (Data Link), aur road/wires par bhej do (Physical)!`,
-    enSteps: (t) => [
-      { heading: "1. Layered Encapsulation", detail: `Each OSI layer wraps the data with its own header on send and unwraps it on receive.` },
-      { heading: "2. Reliable Delivery", detail: `CRC/Hamming catches bit errors; TCP ACKs and Sliding Window retransmit lost packets.` },
-      { heading: "3. Smart Routing", detail: `IP addresses route packets globally across networks; MAC addresses deliver inside a local LAN.` },
-    ],
-    hiSteps: (t) => [
-      { heading: "1. Har Layer Ka Lifafa", detail: `Bhejte waqt har OSI layer apna header (label) chipkati hai; milte waqt ek-ek karke kholti hai.` },
-      { heading: "2. Error Aur Lost Packets", detail: `CRC galti pakadta hai; TCP ACK aur Sliding Window khoe hue packets dubara bhejte hain.` },
-      { heading: "3. IP vs MAC", detail: `IP address poore internet par rasta dhoondhta hai; MAC address local Wi-Fi/LAN mein ghar tak pahunchata hai.` },
-    ],
-    enExample: (t) => ({
-      title: `Network Formula: ${t}`,
-      body: `If subnet mask is /26, 26 bits are Network and 6 bits are Host. Total IPs = 2^6 = 64, and usable hosts = 64 − 2 = 62!`,
-    }),
-    hiExample: (t) => ({
-      title: `Subnetting Trick: ${t}`,
-      body: `Agar /26 diya hai, toh 32 − 26 = 6 host bits bache. Total IPs = 2^6 = 64, aur usable hosts = 64 − 2 = 62 (Network aur Broadcast hata kar)!`,
-    }),
-    enMistake: () => "Using CSMA/CD in Wi-Fi — Ethernet uses CSMA/CD, while Wi-Fi uses CSMA/CA (Collision Avoidance)!",
-    hiMistake: () => "Wi-Fi mein CSMA/CD nahi chalta — Wi-Fi CSMA/CA (Collision Avoidance) use karta hai!",
-    enShortcut: () => "OSI Top-to-Bottom: All People Seem To Need Data Processing (App, Pres, Sess, Trans, Net, Data, Phys).",
-    hiShortcut: () => "Trick: 'Please Do Not Throw Sausage Pizza Away' = Physical, Data, Network, Transport, Session, Presentation, Application!",
-    symbols: [
-      { sym: "/n", meaningEn: "CIDR prefix (n network bits)", meaningHi: "Shuru ke n bits Network ke liye fix" },
-      { sym: "η", meaningEn: "Channel Utilization / Efficiency", meaningHi: "Network link kitna efficiently use hua" },
-    ],
-  },
-  "Artificial Intelligence": {
-    visualKind: "ai_search",
-    visualTitle: "Interactive A* Heuristic (f = g + h) Explorer",
-    enStory: (t) =>
-      `Suppose you're driving to an unfamiliar city. You know how far you've already driven (g) AND Google Maps estimates how far the destination still is (h). Combining both (f = g + h) helps A* find the shortest route without exploring every dead-end road!`,
-    hiStory: (t) =>
-      `Socho tum kisi nayi city drive kar rahe ho. Tumhe pata hai tum abhi tak kitna chal chuke ho (g), aur Google Maps batata hai manzil abhi aur kitni door hai (h). Dono ko jodkar (f = g + h) A* sabse chhota rasta fatafat dhoondh leta hai!`,
-    enSteps: (t) => [
-      { heading: "1. Search & Heuristics", detail: `Uninformed search explores blindly; Informed search (A*) uses heuristic h(n) to steer toward the goal.` },
-      { heading: "2. Reasoning Under Uncertainty", detail: `Bayes' rule updates probabilities with new evidence; Fuzzy logic handles degrees of truth.` },
-      { heading: "3. Learning from Data", detail: `Neural networks adjust weights via backpropagation; Genetic algorithms evolve solutions.` },
-    ],
-    hiSteps: (t) => [
-      { heading: "1. Smart Search", detail: `BFS/DFS andhe hokar dhoondhte hain; A* heuristic h(n) ki madad se seedha goal ki taraf badhta hai.` },
-      { heading: "2. Probability & Fuzzy Logic", detail: `Bayes' rule naya saboot milne par chance update karta hai; Fuzzy logic 0 se 1 ke beech degree deta hai.` },
-      { heading: "3. Machine Learning", detail: `Neural Networks error kam karne ke liye weights update karte hain (Backprop).` },
-    ],
-    enExample: (t) => ({
-      title: `A* Decision: ${t}`,
-      body: `Path A has g=4, h=5 -> f=9. Path B has g=6, h=2 -> f=8. A* picks Path B because total estimated cost f=8 is smaller!`,
-    }),
-    hiExample: (t) => ({
-      title: `A* Kaise Chunta Hai: ${t}`,
-      body: `Rasta A: g=4 + h=5 = 9. Rasta B: g=6 + h=2 = 8. A* Rasta B chunega kyunki uska total score f = 8 kam hai!`,
-    }),
-    enMistake: () => "Thinking a single-layer Perceptron can solve XOR — XOR is NOT linearly separable and needs >= 2 layers!",
-    hiMistake: () => "Single-layer Perceptron XOR solve NAHI kar sakta — uske liye kam se kam 2 layers (MLP) chahiye!",
-    enShortcut: () => "A* is Optimal when h(n) is Admissible (never overestimates true cost).",
-    hiShortcut: () => "Yaad rakho: Agar h(n) kabhi jhoota bada estimate na de (Admissible), toh A* hamesha best rasta dega!",
-    symbols: [
-      { sym: "f(n)", meaningEn: "g(n) + h(n): total estimated path cost", meaningHi: "Ab tak ka kharch + aage ka andaaza" },
-      { sym: "P(A|B)", meaningEn: "Probability of A given B happened", meaningHi: "Agar B ho chuka hai toh A ka chance" },
-    ],
+    relatedTopics: ["Normalization & FDs", "Relational Algebra & SQL", "Transactions & B+ Trees"],
   },
 };
 
-export function getTopicDoc(unitTitle: string, topicTitle: string): TopicDocContent {
-  let profile = UNIT_PROFILES["Discrete"];
-  for (const key of Object.keys(UNIT_PROFILES)) {
+function resolveUnitTemplate(unitTitle: string): UnitTextbookTemplate {
+  for (const key of Object.keys(UNIT_TEMPLATES)) {
     if (unitTitle.toLowerCase().includes(key.toLowerCase())) {
-      profile = UNIT_PROFILES[key];
-      break;
+      return UNIT_TEMPLATES[key];
     }
   }
+  // Structured fallback for OS, SE, DSA, TOC, CN, AI, Programming
+  return {
+    principles: [
+      `Core invariants of ${unitTitle} govern correctness, resource efficiency, and worst-case behavior.`,
+      "Formal models abstract implementation details so algorithms and protocols can be analyzed independently of hardware.",
+      "Trade-offs between time complexity, space overhead, and implementation simplicity determine real-world selection.",
+    ],
+    terminology: [
+      { term: "Invariant", meaning: "A condition that remains true before and after every valid operation step." },
+      { term: "Asymptotic Bound", meaning: "Characterization of growth rate as input size n approaches infinity." },
+      { term: "Edge Case", meaning: "Boundary input (empty, single-element, maximum, or cyclic) that tests correctness." },
+    ],
+    mechanism: [
+      "Define the formal input specification, state representation, and termination condition.",
+      "Execute state transitions or algorithmic steps while preserving the governing invariant.",
+      "Verify correctness at boundary conditions and evaluate time/space complexity.",
+    ],
+    derivation: {
+      formula: "T(n) = a · T(n / b) + f(n)   (Divide & Conquer Recurrence)",
+      variables: [
+        { sym: "n", desc: "Input size" },
+        { sym: "a", desc: "Number of recursive subproblems generated per call (a ≥ 1)" },
+        { sym: "n / b", desc: "Size of each subproblem (b > 1)" },
+        { sym: "f(n)", desc: "Non-recursive work performed to divide and combine results" },
+      ],
+      steps: [
+        "Recursion tree depth equals log_b(n) when problem size divides by b at each level.",
+        "Total number of leaves at the bottom level is a^(log_b n) = n^(log_b a).",
+        "Compare leaf work n^(log_b a) against root work f(n) to obtain the tight Θ bound.",
+      ],
+      numericalExample:
+        "For Merge Sort: T(n) = 2T(n/2) + n. Here a = 2, b = 2, so n^(log_2 2) = n. Since f(n) = Θ(n), Master Theorem Case 2 yields T(n) = Θ(n log n).",
+      calculationMistake:
+        "Confusing base-2 logarithm log_2(n) with log_b(a) when b ≠ 2, or forgetting the extra log n factor in Case 2.",
+    },
+    comparison: {
+      heading: "Theoretical Model vs Practical Trade-off",
+      rows: [
+        { feature: "Primary Objective", primary: "Provable worst-case guarantees", related: "Fast average-case throughput" },
+        { feature: "Memory Overhead", primary: "Explicit auxiliary structures", related: "Cache-friendly in-place layouts" },
+        { feature: "Exam Relevance", primary: "Exact asymptotic & state proofs", related: "Trace-based numericals" },
+      ],
+    },
+    advantages: [
+      `Provides systematic, reusable problem-solving patterns across ${unitTitle}.`,
+      "Supports rigorous complexity and correctness verification.",
+    ],
+    limitations: [
+      "Constant factors and hardware cache behavior are abstracted away by asymptotic bounds.",
+    ],
+    misconceptions: [
+      { myth: "Worst-case O(n²) means an algorithm is always slow in practice.", reality: "Average-case and cache locality (e.g., QuickSort) can outperform O(n log n) algorithms with high constant factors." },
+    ],
+    examPoints: [
+      `Always verify boundary inputs (n = 0, n = 1, negative weights, or empty sets) in ${unitTitle} numericals.`,
+      "Distinguish clearly between necessary conditions and sufficient conditions in theorem statements.",
+    ],
+    relatedTopics: ["Core Algorithms", "Complexity Analysis", "UGC NET PYQ Patterns"],
+  };
+}
 
-  const enEx = profile.enExample(topicTitle);
-  const hiEx = profile.hiExample(topicTitle);
+export function getTextbookChapter(
+  unitTitle: string,
+  topicTitle: string,
+  lang: LearnLang,
+  revisionSummary?: string,
+  formalDefinition?: string
+): TextbookChapter {
+  const tpl = resolveUnitTemplate(unitTitle);
+  const cleanSummary =
+    (revisionSummary || "").trim() ||
+    `${topicTitle} establishes foundational models, formal rules, and algorithmic techniques within ${unitTitle}.`;
+  const cleanDef =
+    (formalDefinition || "").trim() ||
+    `${topicTitle} is formally defined by its state invariants, operational rules, and asymptotic behavior in ${unitTitle}.`;
+
+  if (lang === "hinglish") {
+    return {
+      introduction: `${topicTitle}, ${unitTitle} ka ek core concept hai. Is chapter mein hum iski formal definition, working mechanism, mathematical derivation, aur UGC NET/JRF ke important points bilkul clear aur seedhe tareeke se samjhenge.`,
+      definition: `Formal Definition: ${cleanDef} (Aasan shabdon mein: ${cleanSummary})`,
+      principles: tpl.principles.map((p, i) => `Siddhant ${i + 1}: ${p}`),
+      terminology: tpl.terminology,
+      workingMechanism: tpl.mechanism.map((m, i) => `Step ${i + 1}: ${m}`),
+      derivation: tpl.derivation,
+      examples: [
+        {
+          title: `Solved Example 1 — ${topicTitle} Verification`,
+          problem: `${topicTitle} ke rule ko ek standard input par apply karke step-by-step output verify karo.`,
+          steps: [
+            `Step 1: Sabse pehle core invariant check karo: ${cleanSummary}`,
+            `Step 2: Formal rule apply karo: ${cleanDef}`,
+            "Step 3: Boundary condition (n = 0 ya empty case) verify karke final answer confirm karo.",
+          ],
+          answer: `Verified: ${cleanSummary}`,
+        },
+        {
+          title: `Solved Example 2 — Exam Numerical Approach`,
+          problem: `UGC NET style MCQ mein ${topicTitle} par based options ko eliminate kaise karein?`,
+          steps: [
+            "Step 1: Question mein diye gaye constraints aur quantifiers (always, only if, never) mark karo.",
+            "Step 2: Counter-example test karo — agar ek bhi case fail ho, woh option galat hai.",
+            "Step 3: Complexity / count formula se exact value match karo.",
+          ],
+          answer: tpl.derivation.numericalExample,
+        },
+      ],
+      properties: [
+        `Deterministic & Verifiable: ${topicTitle} har valid input par consistent result deta hai.`,
+        `Exam Anchor: ${cleanDef}`,
+      ],
+      comparison: tpl.comparison,
+      advantages: tpl.advantages,
+      limitations: tpl.limitations,
+      misconceptions: tpl.misconceptions,
+      examPoints: tpl.examPoints,
+      summary: `${topicTitle} Summary: ${cleanSummary} Exam ke liye formal definition aur formula derivation ke saath edge cases zaroor yaad rakhein.`,
+      practiceQuestions: [
+        {
+          question: `${topicTitle} ke context mein kaunsa statement bilkul sahi hai?`,
+          options: [
+            cleanSummary,
+            "Boundary conditions check karne ki zaroorat nahi hoti",
+            "Asymptotic bounds sirf chhote inputs par lagte hain",
+            "Formal definition aur implementation mein koi relation nahi hota",
+          ],
+          correctIndex: 0,
+          explanation: `Sahi jawab Option A hai kyunki ${cleanSummary}`,
+        },
+      ],
+      flashcards: [
+        { front: `${topicTitle} — Formal Definition`, back: cleanDef },
+        { front: `${topicTitle} — Key Formula`, back: tpl.derivation.formula },
+        { front: `${topicTitle} — Common Trap`, back: tpl.misconceptions[0]?.reality || cleanSummary },
+      ],
+      relatedTopics: tpl.relatedTopics,
+    };
+  }
 
   return {
-    visualKind: profile.visualKind,
-    visualTitle: profile.visualTitle,
-    en: {
-      tldr: `${topicTitle} made simple — understand the intuition first, then see how it works visually.`,
-      story: profile.enStory(topicTitle),
-      steps: profile.enSteps(topicTitle),
-      exampleTitle: enEx.title,
-      exampleBody: enEx.body,
-      mistakeToAvoid: profile.enMistake(topicTitle),
-      shortcut: profile.enShortcut(topicTitle),
-    },
-    hinglish: {
-      tldr: `${topicTitle} bilkul aasan bhasha mein — pehle logic samjho, phir visual dekho!`,
-      story: profile.hiStory(topicTitle),
-      steps: profile.hiSteps(topicTitle),
-      exampleTitle: hiEx.title,
-      exampleBody: hiEx.body,
-      mistakeToAvoid: profile.hiMistake(topicTitle),
-      shortcut: profile.hiShortcut(topicTitle),
-    },
-    keySymbols: profile.symbols,
+    introduction: `${topicTitle} is a foundational topic within ${unitTitle}. A rigorous grasp of its formal definition, underlying invariants, and analytical bounds is essential both for systems engineering and for UGC NET/JRF examination problems.`,
+    definition: cleanDef,
+    principles: tpl.principles,
+    terminology: tpl.terminology,
+    workingMechanism: tpl.mechanism,
+    derivation: tpl.derivation,
+    examples: [
+      {
+        title: `Solved Example 1 — Applying ${topicTitle}`,
+        problem: `Demonstrate how ${topicTitle} preserves its governing invariant on a canonical input.`,
+        steps: [
+          `Identify the formal specification: ${cleanDef}`,
+          `Apply the core operational rule: ${cleanSummary}`,
+          "Verify boundary conditions (minimum/empty input and maximum constraint) to ensure consistency.",
+        ],
+        answer: cleanSummary,
+      },
+      {
+        title: `Solved Example 2 — Quantitative / Exam Analysis`,
+        problem: `Evaluate the quantitative bound associated with ${topicTitle} under standard assumptions.`,
+        steps: [
+          `Select the governing equation: ${tpl.derivation.formula}`,
+          "Substitute the given parameters and simplify intermediate terms carefully.",
+          "Cross-check units, logarithm bases, and off-by-one boundary terms.",
+        ],
+        answer: tpl.derivation.numericalExample,
+      },
+    ],
+    properties: [
+      `Core Invariant: ${cleanSummary}`,
+      `Formal Basis: ${cleanDef}`,
+      "Deterministic Behavior: Identical inputs and initial states always produce reproducible outcomes.",
+    ],
+    comparison: tpl.comparison,
+    advantages: tpl.advantages,
+    limitations: tpl.limitations,
+    misconceptions: tpl.misconceptions,
+    examPoints: tpl.examPoints,
+    summary: `${topicTitle} provides a structured framework within ${unitTitle}. Mastery requires knowing its formal definition (${cleanDef}), understanding the derivation steps, and avoiding boundary-case traps.`,
+    practiceQuestions: [
+      {
+        question: `Which statement accurately characterizes ${topicTitle}?`,
+        options: [
+          cleanSummary,
+          "It ignores boundary conditions and formal invariants",
+          "Its asymptotic behavior depends only on constant factors",
+          "It cannot be analyzed independently of specific hardware",
+        ],
+        correctIndex: 0,
+        explanation: `Option A is correct: ${cleanSummary}`,
+      },
+    ],
+    flashcards: [
+      { front: `${topicTitle} — Formal Definition`, back: cleanDef },
+      { front: `${topicTitle} — Key Formula`, back: tpl.derivation.formula },
+      { front: `${topicTitle} — Misconception Check`, back: tpl.misconceptions[0]?.reality || cleanSummary },
+    ],
+    relatedTopics: tpl.relatedTopics,
   };
 }
