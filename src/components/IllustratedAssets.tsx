@@ -32,7 +32,7 @@ export function Illustration({
       priority={priority}
       unoptimized
       style={{ objectPosition }}
-      className={`object-contain select-none ${animate ? "transition-transform duration-300 hover:scale-105" : ""} ${className}`}
+      className={`object-contain select-none drop-shadow-[0_4px_8px_rgba(73,52,38,0.16)] ${animate ? "transition-transform duration-300 hover:scale-105" : ""} ${className}`}
     />
   );
 }

@@ -165,13 +165,16 @@ export default function DashboardPage() {
               <h3 className="font-hand text-3xl font-bold mt-1">
                 Linked List Mastery (Kingdom VII)
               </h3>
-              <div className="my-3 p-3 rounded bg-[#FAF4E8] border border-ink/15 flex items-center gap-3">
-                <Illustration
-                  src="/assets/educational/railway-train.png"
-                  alt="Mountain Express Railway"
-                  width={120}
-                  height={62}
-                />
+              <div className="my-3 p-2.5 rounded bg-[#FAF4E8] border border-ink/15 flex items-center gap-3">
+                <div className="rounded border border-ink/20 overflow-hidden shrink-0">
+                  <Illustration
+                    src="/assets/educational/railway-scene-hq.png"
+                    alt="Mountain Express Railway"
+                    width={124}
+                    height={70}
+                    className="object-cover"
+                  />
+                </div>
                 <p className="font-serif text-xs text-ink-muted leading-relaxed">
                   Master node insertion, deletion, in-place reversal, and conquer the Pointer Lord.
                 </p>

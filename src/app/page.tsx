@@ -117,46 +117,32 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Illustrated Landscape & Explorer Composition */}
+        {/* Illustrated Landscape & Explorer Bookplate */}
         <div className="lg:col-span-6 space-y-4">
-          <div className="journal-card p-5 washi-tape relative overflow-hidden bg-gradient-to-b from-[#FAF4E8] to-[#EFE2C6]">
-            <div className="flex flex-col items-center">
+          <div className="journal-card p-4 sm:p-5 washi-tape relative overflow-hidden bg-[#FAF4E8]">
+            <div className="rounded-md overflow-hidden border-2 border-ink/25 shadow-sm bg-[#F5EBD8]">
               <Illustration
-                src="/assets/ui/final-logo.png"
-                alt="The CS Journey — Master Computer Science"
-                width={280}
-                height={186}
+                src="/assets/landscapes/hero-scene-hq.png"
+                alt="Explorer overlooking the CS Kingdoms"
+                width={688}
+                height={384}
                 priority
+                className="w-full h-auto object-cover"
               />
-              <div className="relative w-full flex items-end justify-between gap-2 mt-2 px-2">
-                <Illustration
-                  src="/assets/landscapes/hero-overlook.png"
-                  alt="Explorer overlooking the CS Kingdoms"
-                  width={180}
-                  height={165}
-                  priority
-                  className="shrink-0"
-                />
-                <Illustration
-                  src="/assets/landscapes/camp-mountains.png"
-                  alt="Explorer camp and mountain peaks"
-                  width={320}
-                  height={150}
-                  priority
-                  className="hidden sm:block"
-                />
-              </div>
             </div>
 
             {/* Featured Railway Lesson Strip */}
             <div className="mt-4 pt-3 border-t border-ink/15 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <Illustration
-                  src="/assets/educational/railway-train.png"
-                  alt="Mountain Express Railway"
-                  width={110}
-                  height={56}
-                />
+                <div className="rounded border border-ink/20 overflow-hidden shrink-0">
+                  <Illustration
+                    src="/assets/educational/railway-scene-hq.png"
+                    alt="Mountain Express Railway"
+                    width={116}
+                    height={64}
+                    className="object-cover"
+                  />
+                </div>
                 <div>
                   <p className="text-[11px] uppercase font-bold text-terracotta">Featured Interactive Lesson</p>
                   <p className="font-hand text-xl font-bold">The Railway Linked List</p>

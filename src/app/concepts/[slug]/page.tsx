@@ -278,17 +278,19 @@ function ConceptPageInner() {
                   <div className="journal-card p-6 washi-tape space-y-4">
                     <h2 className="font-hand text-3xl font-bold">Stage 1: Discover the Story</h2>
                     <div className="p-4 rounded-md bg-[#F2E6CF]/75 border border-ink/20 flex flex-col sm:flex-row items-center gap-4">
-                      <Illustration
-                        src={
-                          data.concept.simulator_type === "linked_list"
-                            ? "/assets/educational/railway-train.png"
-                            : "/assets/characters/explorer-reading.png"
-                        }
-                        alt={data.concept.title}
-                        width={data.concept.simulator_type === "linked_list" ? 180 : 110}
-                        height={100}
-                        className="shrink-0"
-                      />
+                      <div className="rounded border border-ink/25 overflow-hidden shrink-0">
+                        <Illustration
+                          src={
+                            data.concept.simulator_type === "linked_list"
+                              ? "/assets/educational/railway-scene-hq.png"
+                              : "/assets/characters/explorer-reading.png"
+                          }
+                          alt={data.concept.title}
+                          width={data.concept.simulator_type === "linked_list" ? 240 : 120}
+                          height={135}
+                          className="object-cover"
+                        />
+                      </div>
                       <p className="font-serif text-base leading-relaxed">{data.lesson.discover_story}</p>
                     </div>
                     <div className="flex justify-end gap-2">
