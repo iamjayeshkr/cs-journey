@@ -103,7 +103,7 @@ export default function ExamArenaPage() {
   const mins = Math.floor(secondsLeft / 60);
   const secs = secondsLeft % 60;
   const activeQ = questions[currentIdx];
-  const totalPages = Math.max(1, Math.ceil(totalTests / 12));
+  const totalPages = Math.max(1, Math.ceil(totalTests / 4));
 
   return (
     <JournalShell user={user}>
@@ -329,7 +329,7 @@ export default function ExamArenaPage() {
             </div>
 
             <div className="grid lg:grid-cols-12 gap-5">
-              <div className="lg:col-span-8 grid sm:grid-cols-2 gap-3.5">
+              <div className="lg:col-span-8 grid sm:grid-cols-2 gap-4 h-fit">
                 {tests.map((t) => (
                   <div key={t.id} className="journal-card p-4 flex flex-col justify-between gap-3">
                     <div>

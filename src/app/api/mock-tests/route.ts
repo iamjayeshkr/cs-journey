@@ -41,7 +41,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ mock_test: test, questions });
   }
 
-  const { total, items } = listMockTests({ category, kingdomId, page, limit: 12 });
+  const { total, items } = listMockTests({ category, kingdomId, page, limit: 4 });
   const attempts = userId
     ? db
         .prepare(
