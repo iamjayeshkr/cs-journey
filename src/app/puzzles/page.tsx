@@ -119,7 +119,9 @@ export default function PuzzlesPage() {
         {/* Header */}
         <div className="journal-parchment p-5 flex flex-wrap items-center justify-between gap-4 washi-tape">
           <div className="flex items-center gap-4">
-            <Illustration src="/assets/puzzles/portal.png" alt="Dungeon Portal" width={70} height={70} />
+            <div className="w-16 h-16 rounded-lg bg-[#FAF4E8] border border-ink/25 flex items-center justify-center p-1 shrink-0">
+              <Illustration src="/assets/companions/foxy.png" alt="Puzzle Companion Foxy" width={58} height={58} />
+            </div>
             <div>
               <h1 className="font-hand text-4xl font-bold leading-none">
                 {selectedHouse ? `Unit ${selectedHouse.order_index} Puzzle House` : "Puzzle Houses — 10 CS Kingdoms"}
@@ -164,7 +166,9 @@ export default function PuzzlesPage() {
                 onClick={() => enterHouse(h)}
                 className="journal-card p-4 text-center flex flex-col items-center justify-between hover:bg-[#F3E8D2] transition-all hover:-translate-y-0.5"
               >
-                <KingdomIllustration kingdomKey={h.kingdom_id} alt={h.title} size={96} />
+                <div className="w-24 h-24 rounded-lg bg-[#FAF4E8] border border-ink/20 flex items-center justify-center p-1">
+                  <KingdomIllustration kingdomKey={h.kingdom_id} alt={h.title} size={86} />
+                </div>
                 <div className="mt-2 space-y-1">
                   <span className="text-[11px] font-bold uppercase text-terracotta">
                     Unit {h.order_index} House
