@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   AlertTriangle,
   ArrowLeft,
+  ArrowRight,
   BookOpen,
   CheckCircle2,
   Compass,
@@ -333,19 +334,58 @@ export default function LearnDocsPage() {
                   <div className="p-4 sm:p-5 border-b border-ink/15 bg-[#F8EFE0] shrink-0 space-y-3">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-terracotta">
-                          {activeUnit.title}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-terracotta">
+                            {activeUnit.title}
+                          </span>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-parchment border border-ink/15 text-ink-muted">
+                            Topic {String(unitTopics.findIndex((t) => t.id === activeTopic.id) + 1).padStart(2, "0")} / {String(unitTopics.length).padStart(2, "0")}
+                          </span>
+                        </div>
                         <h2 className="font-hand text-3xl font-bold text-ink leading-tight">
                           {activeTopic.title}
                         </h2>
                       </div>
-                      <Link
-                        href={`/concepts/${activeTopic.slug}`}
-                        className="terracotta-btn px-3 py-1.5 rounded text-xs font-semibold inline-flex items-center gap-1.5 shrink-0"
-                      >
-                        <Swords className="w-3.5 h-3.5" /> Interactive Stage →
-                      </Link>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          disabled={unitTopics.findIndex((t) => t.id === activeTopic.id) <= 0}
+                          onClick={() => {
+                            const idx = unitTopics.findIndex((t) => t.id === activeTopic.id);
+                            if (idx > 0) {
+                              setSelectedConceptSlug(unitTopics[idx - 1].slug);
+                              setSelectedPracticeOption(null);
+                              setFlippedCardIdx(null);
+                            }
+                          }}
+                          className="parchment-btn px-2.5 py-1.5 rounded text-xs font-semibold inline-flex items-center gap-1 disabled:opacity-40"
+                          title="Previous topic in unit"
+                        >
+                          <ArrowLeft className="w-3.5 h-3.5" /> Prev
+                        </button>
+                        <button
+                          type="button"
+                          disabled={unitTopics.findIndex((t) => t.id === activeTopic.id) >= unitTopics.length - 1}
+                          onClick={() => {
+                            const idx = unitTopics.findIndex((t) => t.id === activeTopic.id);
+                            if (idx >= 0 && idx < unitTopics.length - 1) {
+                              setSelectedConceptSlug(unitTopics[idx + 1].slug);
+                              setSelectedPracticeOption(null);
+                              setFlippedCardIdx(null);
+                            }
+                          }}
+                          className="parchment-btn px-2.5 py-1.5 rounded text-xs font-semibold inline-flex items-center gap-1 disabled:opacity-40"
+                          title="Next topic in unit"
+                        >
+                          Next <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                        <Link
+                          href={`/concepts/${activeTopic.slug}`}
+                          className="terracotta-btn px-3 py-1.5 rounded text-xs font-semibold inline-flex items-center gap-1.5 shrink-0"
+                        >
+                          <Swords className="w-3.5 h-3.5" /> Interactive Stage →
+                        </Link>
+                      </div>
                     </div>
 
                     <div className="flex flex-wrap gap-1.5">
