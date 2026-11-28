@@ -5,8 +5,10 @@ import Editor, { OnMount } from "@monaco-editor/react";
 import {
   ArrowLeft,
   ArrowRight,
+  Check,
   CheckCircle2,
   Code2,
+  Copy,
   Feather,
   Lightbulb,
   Play,
@@ -70,6 +72,13 @@ export default function CodeArenaPage() {
   const [error, setError] = useState("");
   const [submittedMsg, setSubmittedMsg] = useState("");
   const [solvedIds, setSolvedIds] = useState<string[]>([]);
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  function copyEditorCode() {
+    navigator.clipboard?.writeText(code).catch(() => {});
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 1600);
+  }
 
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
 
@@ -192,8 +201,13 @@ export default function CodeArenaPage() {
           }}
         >
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-terracotta/15 border border-terracotta/30 text-[11px] font-bold text-terracotta">
-              <Code2 className="w-3.5 h-3.5" /> Code Arena
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-terracotta/15 border border-terracotta/30 text-[11px] font-bold text-terracotta">
+                <Code2 className="w-3.5 h-3.5" /> Code Arena
+              </div>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-forest/15 border border-forest/30 text-[11px] font-bold text-forest">
+                <CheckCircle2 className="w-3 h-3" /> {solvedIds.length} / 840 Solved
+              </span>
             </div>
             <h1 className="font-hand text-3xl sm:text-4xl font-bold leading-tight text-ink">
               {activeProblem
@@ -480,6 +494,22 @@ export default function CodeArenaPage() {
                       className="parchment-btn px-2.5 py-1 rounded text-[11px] font-semibold inline-flex items-center gap-1"
                     >
                       <Wand2 className="w-3 h-3 text-terracotta" /> Format
+                    </button>
+                    <button
+                      type="button"
+                      onClick={copyEditorCode}
+                      className="parchment-btn px-2.5 py-1 rounded text-[11px] font-semibold inline-flex items-center gap-1"
+                      title="Copy code to clipboard"
+                    >
+                      {copiedCode ? (
+                        <>
+                          <Check className="w-3 h-3 text-forest" /> Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3 text-terracotta" /> Copy
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
