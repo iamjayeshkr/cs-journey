@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
@@ -28,13 +29,37 @@ export function computeLevel(xp: number): number {
 
 export function getDb(): DatabaseSync {
   if (!_db) {
-    const dataDir = path.join(process.cwd(), "data");
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
+    const localDataDir = path.join(process.cwd(), "data");
+    const isVercel = Boolean(process.env.VERCEL);
+    let dataDir = isVercel ? path.join(os.tmpdir(), "cs-journey-data") : localDataDir;
+
+    try {
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+    } catch {
+      dataDir = path.join(os.tmpdir(), "cs-journey-data");
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
     }
+
     const dbPath = path.join(dataDir, "cs-journey.db");
+    const bundledDb = path.join(localDataDir, "cs-journey.db");
+    if (dataDir !== localDataDir && !fs.existsSync(dbPath) && fs.existsSync(bundledDb)) {
+      try {
+        fs.copyFileSync(bundledDb, dbPath);
+      } catch {
+        // Ignore copy failure; schema + seed will initialize cleanly
+      }
+    }
+
     _db = new DatabaseSync(dbPath);
-    _db.exec("PRAGMA journal_mode = WAL;");
+    try {
+      _db.exec("PRAGMA journal_mode = WAL;");
+    } catch {
+      // Fallback if WAL cannot be enabled in constrained FS
+    }
     _db.exec("PRAGMA foreign_keys = ON;");
   }
   if (!_initialized) {
