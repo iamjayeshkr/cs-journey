@@ -7,8 +7,10 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
+  Check,
   CheckCircle2,
   Compass,
+  Copy,
   FlaskConical,
   GraduationCap,
   Languages,
@@ -78,6 +80,13 @@ export default function LearnDocsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedPracticeOption, setSelectedPracticeOption] = useState<number | null>(null);
   const [flippedCardIdx, setFlippedCardIdx] = useState<number | null>(null);
+  const [copiedFormula, setCopiedFormula] = useState(false);
+
+  function copyFormulaText(text: string) {
+    navigator.clipboard?.writeText(text).catch(() => {});
+    setCopiedFormula(true);
+    setTimeout(() => setCopiedFormula(false), 1600);
+  }
 
   useEffect(() => {
     Promise.all([
@@ -462,9 +471,27 @@ export default function LearnDocsPage() {
                             4. Mathematical Formulation &amp; Derivation
                           </h3>
                           <div className="p-4 rounded-lg bg-ivory border border-ink/20 space-y-3">
-                            <p className="font-mono text-sm font-bold text-ink bg-parchment/70 p-2.5 rounded border border-ink/15">
-                              {chapter.derivation.formula}
-                            </p>
+                            <div className="flex items-center justify-between gap-2 bg-parchment/70 p-2.5 rounded border border-ink/15">
+                              <p className="font-mono text-sm font-bold text-ink">
+                                {chapter.derivation.formula}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => copyFormulaText(chapter.derivation.formula)}
+                                className="parchment-btn px-2 py-1 rounded text-[11px] font-semibold inline-flex items-center gap-1 shrink-0"
+                                title="Copy formula"
+                              >
+                                {copiedFormula ? (
+                                  <>
+                                    <Check className="w-3 h-3 text-forest" /> Copied
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3 h-3 text-terracotta" /> Copy
+                                  </>
+                                )}
+                              </button>
+                            </div>
                             <div className="grid sm:grid-cols-2 gap-2 text-xs">
                               {chapter.derivation.variables.map((v) => (
                                 <div key={v.sym} className="flex items-start gap-2">
