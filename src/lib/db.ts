@@ -34,21 +34,25 @@ export function getDb(): DatabaseSync {
     let dataDir = isVercel ? path.join(os.tmpdir(), "cs-journey-data") : localDataDir;
 
     try {
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
+      if (!fs.existsSync(/*turbopackIgnore: true*/ dataDir)) {
+        fs.mkdirSync(/*turbopackIgnore: true*/ dataDir, { recursive: true });
       }
     } catch {
       dataDir = path.join(os.tmpdir(), "cs-journey-data");
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
+      if (!fs.existsSync(/*turbopackIgnore: true*/ dataDir)) {
+        fs.mkdirSync(/*turbopackIgnore: true*/ dataDir, { recursive: true });
       }
     }
 
     const dbPath = path.join(dataDir, "cs-journey.db");
     const bundledDb = path.join(localDataDir, "cs-journey.db");
-    if (dataDir !== localDataDir && !fs.existsSync(dbPath) && fs.existsSync(bundledDb)) {
+    if (
+      dataDir !== localDataDir &&
+      !fs.existsSync(/*turbopackIgnore: true*/ dbPath) &&
+      fs.existsSync(/*turbopackIgnore: true*/ bundledDb)
+    ) {
       try {
-        fs.copyFileSync(bundledDb, dbPath);
+        fs.copyFileSync(/*turbopackIgnore: true*/ bundledDb, /*turbopackIgnore: true*/ dbPath);
       } catch {
         // Ignore copy failure; schema + seed will initialize cleanly
       }
